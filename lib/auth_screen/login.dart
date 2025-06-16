@@ -1,5 +1,6 @@
+import 'package:book_store/routes.dart';
+import 'package:book_store/services/user_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_signin_button/button_view.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 
 class Login extends StatefulWidget {
@@ -14,8 +15,37 @@ class _LoginState extends State<Login> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isObscure = true;
+  bool _isRemeber = false;
   double _opacity = 0.0;
   double _scale = 0.6;
+
+  void _login() async {
+    FocusScope.of(context).unfocus();
+    try {
+      final user = await UserService.loginUser(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+        _isRemeber,
+      );
+
+      if (user != null && mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Login successful!')));
+        Navigator.pushReplacementNamed(context, AppRoutes.landing);
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Login failed! Please try again.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -38,154 +68,144 @@ class _LoginState extends State<Login> {
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
       ),
-      body: Stack(
-        children: [
-          Padding(
-            padding: EdgeInsets.all(16),
-            child: AnimatedOpacity(
-              opacity: _opacity,
-              duration: const Duration(seconds: 1),
-              child: AnimatedScale(
-                scale: _scale,
-                duration: const Duration(milliseconds: 500),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Image.asset(
-                      "assets/images/logo-dark.png",
-                      width: 200,
-                      height: 200,
-                    ),
-                    SizedBox(height: 20),
-                    const Text(
-                      'Please fill your details to login.',
-                      textAlign: TextAlign.left,
-                      style: TextStyle(fontSize: 18),
-                    ),
-                    SizedBox(height: 20),
-                    Form(
-                      key: _formKey,
-                      child: Column(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: AnimatedOpacity(
+          opacity: _opacity,
+          duration: const Duration(seconds: 1),
+          child: AnimatedScale(
+            scale: _scale,
+            duration: const Duration(milliseconds: 500),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Image.asset(
+                  "assets/images/logo-dark.png",
+                  width: 200,
+                  height: 200,
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Please fill your details to login.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18),
+                ),
+                const SizedBox(height: 20),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _emailController,
+                        decoration: const InputDecoration(
+                          labelText: 'Email',
+                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Color(0xFFDEDEDE),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your email';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: _isObscure,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          filled: true,
+                          fillColor: const Color(0xFFDEDEDE),
+                          border: const OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _isObscure
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isObscure = !_isObscure;
+                              });
+                            },
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your password';
+                          }
+                          return null;
+                        },
+                      ),
+                      Row(
                         children: [
-                          TextFormField(
-                            controller: _emailController,
-                            decoration: const InputDecoration(
-                              labelText: 'Email',
-                              border: OutlineInputBorder(),
-                              filled: true,
-                              fillColor: Color(0xFFDEDEDE),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your email';
-                              }
-                              return null;
+                          Checkbox(
+                            value: _isRemeber,
+                            onChanged: (value) {
+                              setState(() {
+                                _isRemeber = value ?? false;
+                              });
                             },
                           ),
-                          SizedBox(height: 20),
-                          TextFormField(
-                            controller: _passwordController,
-                            obscureText: _isObscure,
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              filled: true,
-                              fillColor: Color(0xFFDEDEDE),
-                              border: const OutlineInputBorder(),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _isObscure
-                                      ? Icons.visibility
-                                      : Icons.visibility_off,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _isObscure = !_isObscure;
-                                  });
-                                },
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your password';
-                              }
-                              return null;
-                            },
-                          ),
+                          const Text('Remember me'),
                         ],
                       ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _login,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF121212),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            // Handle login logic here
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Logging in...')),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF121212),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: const Text(
-                          'Get Started',
-                          style: TextStyle(color: Color(0xFFDEDEDE)),
+                    child: const Text(
+                      'Get Started',
+                      style: TextStyle(color: Color(0xFFDEDEDE)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Or login with',
+                  style: TextStyle(fontSize: 16, color: Color(0xFF121212)),
+                ),
+                const SizedBox(height: 10),
+                SignInButton(Buttons.Google, onPressed: () {}),
+                const SizedBox(height: 10),
+                SignInButton(Buttons.FacebookNew, onPressed: () {}),
+                const SizedBox(height: 30),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Don\'t have an account?',
+                      style: TextStyle(fontSize: 15),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, AppRoutes.register);
+                      },
+                      child: const Text(
+                        'Register',
+                        style: TextStyle(
+                          color: Color(0xFF121212),
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                    SizedBox(height: 20),
-                    Text(
-                      'Or login with',
-                      style: TextStyle(fontSize: 16, color: Color(0xFF121212)),
-                    ),
-                    SizedBox(height: 10),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SignInButton(Buttons.Google, onPressed: () {}),
-                        SizedBox(height: 10),
-                        SignInButton(Buttons.FacebookNew, onPressed: () {}),
-                      ],
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
           ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Don\'t have an account?',
-                    style: TextStyle(fontSize: 15),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/register');
-                    },
-                    child: const Text(
-                      'Register',
-                      style: TextStyle(
-                        color: Color(0xFF121212),
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
