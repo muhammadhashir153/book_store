@@ -36,14 +36,34 @@ class UserService {
     try {
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: pass);
-      if (isRemeber) {
+
+      User? user = userCredential.user;
+
+      if (user != null) {
         SharedPreferences prefs = await SharedPreferences.getInstance();
+
+        // Store basic info
         await prefs.setBool('isRemeber', isRemeber);
-      } else {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('isRemeber', isRemeber);
+        await prefs.setString('uid', user.uid);
+
+        // Now fetch role from Firestore (example)
+        DocumentSnapshot<Map<String, dynamic>> userDoc = await FirebaseFirestore
+            .instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists && userDoc.data() != null) {
+          String role = userDoc.data()!['role'] ?? 'user'; // fallback role
+          await prefs.setString('role', role);
+        } else {
+          await prefs.setString('role', 'user'); // default if not found
+        }
+
+        return user;
       }
-      return userCredential.user;
+
+      return null;
     } catch (e) {
       print("Error logging in user: $e");
       return null;

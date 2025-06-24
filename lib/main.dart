@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFFDEDEDE)),
         textTheme: GoogleFonts.openSansTextTheme(),
       ),
-      initialRoute: AppRoutes.splashScreen,
+      initialRoute: AppRoutes.home,
       routes: AppRoutes.routes,
     );
   }

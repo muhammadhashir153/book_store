@@ -30,70 +30,100 @@ class _ViewBooksState extends State<ViewBooks> {
   }
 
   Future<void> _deleteBook(String id) async {
+    final confirmed = await _showDeleteConfirmationDialog();
+    if (!confirmed) return;
+
     await BookService.deleteBook(id);
     fetchBooks();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Book deleted successfully')),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Book deleted successfully')),
+      );
+    }
+  }
+
+  Future<bool> _showDeleteConfirmationDialog() async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Delete Book'),
+            content: const Text('Are you sure you want to delete this book?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 
   void _editBook(BookModel book) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => EditBook(book: book),
-      ),
+      MaterialPageRoute(builder: (context) => EditBook(book: book)),
     ).then((_) => fetchBooks());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('All Books')),
+      appBar: AppBar(
+        title: const Text('All Books'),
+        automaticallyImplyLeading: false,
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _books.isEmpty
-              ? const Center(child: Text('No books available'))
-              : ListView.builder(
-                  itemCount: _books.length,
-                  itemBuilder: (context, index) {
-                    final book = _books[index];
-                    return ListTile(
-                      leading: Image.network(
-                        book.imageUrl ?? '',
-                        width: 50,
-                        height: 70,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.image),
+          ? const Center(child: Text('No books available'))
+          : ListView.builder(
+              itemCount: _books.length,
+              itemBuilder: (context, index) {
+                final book = _books[index];
+                return ListTile(
+                  leading: Image.network(
+                    book.imageUrl ?? '',
+                    width: 50,
+                    height: 70,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => const Icon(Icons.image),
+                  ),
+                  title: Text(book.title ?? ''),
+                  subtitle: Text(book.authorName ?? ''),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blue),
+                        onPressed: () => _editBook(book),
                       ),
-                      title: Text(book.title ?? ''),
-                      subtitle: Text(book.authorName ?? ''),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            onPressed: () => _editBook(book),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _deleteBook(book.id!),
-                          ),
-                        ],
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => _deleteBook(book.id!),
                       ),
-                    );
-                  },
-                ),
-                floatingActionButton: FloatingActionButton(
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const Addbook()),
-      ).then((_) => fetchBooks()); // refresh after returning
-    },
-    child: const Icon(Icons.add),
-    tooltip: 'Add New Book',
-  ),
+                    ],
+                  ),
+                );
+              },
+            ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const Addbook()),
+          ).then((_) => fetchBooks()); // refresh after returning
+        },
+        tooltip: 'Add New Book',
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }
