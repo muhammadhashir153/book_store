@@ -1,3 +1,4 @@
+import 'package:book_store/user_screen/pages/user_home.dart';
 import 'package:flutter/material.dart';
 
 class UserHomePage extends StatefulWidget {
@@ -8,9 +9,10 @@ class UserHomePage extends StatefulWidget {
 }
 
 class _UserHomePageState extends State<UserHomePage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _selectedIndex = 0;
   late PageController _pageController;
-
+  final List<String> _titles = ['Home', 'Categories', 'Cart', 'Account'];
   @override
   void initState() {
     super.initState();
@@ -19,6 +21,7 @@ class _UserHomePageState extends State<UserHomePage> {
 
   void _onNavTapped(int index) {
     _pageController.jumpToPage(index);
+    _selectedIndex = index;
   }
 
   void _onPageChanged(int index) {
@@ -30,11 +33,34 @@ class _UserHomePageState extends State<UserHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
+      endDrawer: Drawer(
+        child: Column(
+          children: [
+            DrawerHeader(child: Text("Your Cart")),
+            ListTile(title: Text("Item 1")),
+            ListTile(title: Text("Item 2")),
+            ElevatedButton(onPressed: () {}, child: Text("Checkout")),
+          ],
+        ),
+      ),
+      appBar: AppBar(
+        title: Text(_titles[_selectedIndex]),
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.shopping_cart),
+            onPressed: () {
+              _scaffoldKey.currentState?.openEndDrawer();
+            },
+          ),
+        ],
+      ),
       body: PageView(
         controller: _pageController,
         onPageChanged: _onPageChanged,
         children: const [
-          Center(child: Text('Home Page')),
+          HomeSupportPage(),
           Center(child: Text('Categories Page')),
           Center(child: Text('Cart Page')),
           Center(child: Text('Account Page')),
@@ -46,7 +72,7 @@ class _UserHomePageState extends State<UserHomePage> {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Color(0xFF0D0D0D),
         unselectedItemColor: Colors.black54,
-        backgroundColor: Colors.grey[200],
+        backgroundColor: Color(0xffE6E6E6),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(

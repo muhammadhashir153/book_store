@@ -70,11 +70,13 @@ class UserService {
     }
   }
 
-  static Future<void> logoutUser() async {
+  static Future<bool> logoutUser() async {
     try {
       await FirebaseAuth.instance.signOut();
+      return true;
     } catch (e) {
       print("Error logging out user: $e");
+      return false;
     }
   }
 }

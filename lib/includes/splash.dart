@@ -10,7 +10,7 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  String _route = AppRoutes.landing; // default
+  String _route = AppRoutes.home; // default
 
   @override
   void initState() {
@@ -24,14 +24,14 @@ class _SplashScreenState extends State<SplashScreen> {
     final String uid = prefs.getString('uid') ?? '';
     final String role = prefs.getString('role') ?? 'user';
 
-    // Determine the route
-    if (uid.isNotEmpty && role != 'user') {
-      _route = AppRoutes.viewBook; // you can define this route
-    } else if (uid.isNotEmpty && role == 'user') {
-      _route = AppRoutes.home;
-    }
+    
+    // if (uid.isNotEmpty && role != 'user') {
+    //   _route = AppRoutes.viewBook; // you can define this route
+    // } else if (uid.isNotEmpty && role == 'user') {
+    //   _route = AppRoutes.home;
+    // }
 
-    // Wait for splash delay
+    
     await Future.delayed(const Duration(milliseconds: 1500));
 
     if (mounted) {
