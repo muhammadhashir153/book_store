@@ -19,6 +19,7 @@
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
+  <meta name="google-signin-client_id" content="389708759305-3sibfo29sdhf7emp68eg3qld5d3rbhv6.apps.googleusercontent.com">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -34,5 +35,21 @@
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js"></script>
+
+<script>
+  const firebaseConfig = {
+  apiKey: "AIzaSyCQ92zvchslWfcyNzqZFVihQPp2UaPEswU",
+  authDomain: "store-7d6ef.firebaseapp.com",
+  databaseURL: "https://store-7d6ef-default-rtdb.firebaseio.com",
+  projectId: "store-7d6ef",
+  storageBucket: "store-7d6ef.firebasestorage.app",
+  messagingSenderId: "389708759305",
+  appId: "1:389708759305:web:0373f76b6e55074e0193d8",
+  measurementId: "G-CRSQWZV4F1"
+  };
+  firebase.initializeApp(firebaseConfig);
+</script>
 </body>
 </html>

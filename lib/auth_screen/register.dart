@@ -240,9 +240,67 @@ class _RegisterState extends State<Register> {
                 const SizedBox(height: 10),
 
                 // Social Buttons
-                SignInButton(Buttons.Google, onPressed: () {}),
-                const SizedBox(height: 10),
-                SignInButton(Buttons.FacebookNew, onPressed: () {}),
+              SignInButton(
+  Buttons.Google,
+  onPressed: () async {
+    FocusScope.of(context).unfocus();
+
+    userData['name'] = _nameController.text.trim().isNotEmpty
+        ? _nameController.text.trim()
+        : 'Google User';
+    userData['email'] = ''; // will be auto-filled in service
+    userData['profileImage'] =
+        getAvatarUrl(userData['name']);
+    userData['role'] = 'user';
+    userData['billingAddress'] = '';
+    userData['shippingAddress'] = '';
+
+    final user = await UserService.signInWithGoogle(userData);
+    print(user);
+
+   if (user != null && mounted) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Google registration successful!')),
+  );
+  Navigator.pushReplacementNamed(context, AppRoutes.viewBook);
+} else {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Google registration failed!')),
+  );
+  print("❌ Google sign-in returned null.");
+}
+  }
+),
+const SizedBox(height: 10),
+SignInButton(
+  Buttons.FacebookNew,
+  onPressed: () async {
+    FocusScope.of(context).unfocus();
+
+    userData['name'] = _nameController.text.trim().isNotEmpty
+        ? _nameController.text.trim()
+        : 'Facebook User';
+    userData['email'] = ''; // will be auto-filled in service
+    userData['profileImage'] =
+        getAvatarUrl(userData['name']);
+    userData['role'] = 'user';
+    userData['billingAddress'] = '';
+    userData['shippingAddress'] = '';
+
+    final user = await UserService.signInWithFacebook(userData);
+
+    if (user != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Facebook registration successful!')),
+      );
+      Navigator.pushReplacementNamed(context, AppRoutes.viewBook);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Facebook registration failed!')),
+      );
+    }
+  },
+),
 
                 const SizedBox(height: 30),
 
