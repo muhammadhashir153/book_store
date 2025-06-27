@@ -5,7 +5,9 @@ import 'package:intl/intl.dart';
 
 class BookCarousel extends StatefulWidget {
   final String? topic;
-  const BookCarousel({super.key, required this.topic});
+  final String? type;
+
+  const BookCarousel({super.key, required this.topic, this.type});
 
   @override
   State<BookCarousel> createState() => _BookCarouselState();
@@ -59,87 +61,176 @@ class _BookCarouselState extends State<BookCarousel> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 24),
-      child: SizedBox(
-        height: 380,
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: filteredBooks.length,
-                itemBuilder: (context, index) {
-                  final book = filteredBooks[index];
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: Container(
-                      width: 220,
-                      margin: const EdgeInsets.only(right: 16.0),
-                      decoration: BoxDecoration(
-                        color: Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      child: Column(
-                        children: [
-                          Image.network(
-                            book.imageUrl ?? '',
-                            height: 160,
-                            width: double.infinity,
-                            fit: BoxFit.contain,
-                          ),
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.all(16),
-                              width: double.infinity,
+      child: widget.type == 'deals'
+          ? SizedBox(
+              height: 200,
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: filteredBooks.length,
+                      itemBuilder: (context, index) {
+                        final book = filteredBooks[index];
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(8.0),
+                          child: Container(
+                            width: 340,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8.0),
                               color: Color(0xFF121212),
-                              child: Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        book.genre ?? 'No Genre',
-                                        style: TextStyle(
-                                          color: Color(0xFFF5F5F5),
+                            ),
+                            margin: const EdgeInsets.only(right: 16.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Image.network(
+                                  book.imageUrl ?? '',
+                                  width: 120,
+                                  height: 200,
+                                  fit: BoxFit.cover,
+                                ),
+                                Expanded(
+                                  // 👈 Add this
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 16,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              book.genre ?? 'No Genre',
+                                              style: const TextStyle(
+                                                color: Color(0xFFF5F5F5),
+                                              ),
+                                            ),
+                                            Text(
+                                              book.title ?? 'No Title',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 2,
+                                              style: const TextStyle(
+                                                color: Color(0xFFF5F5F5),
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 20,
+                                              ),
+                                            ),
+                                            Text(
+                                              book.authorName ?? 'No Author',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 2,
+                                              style: const TextStyle(
+                                                color: Color(0xFFF5F5F5),
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                      Text(
-                                        book.title ?? 'No Title',
-                                        style: TextStyle(
-                                          color: Color(0xFFF5F5F5),
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 20,
+                                        Text(
+                                          'Rs ${NumberFormat('#,##0.00').format(double.tryParse(book.price ?? '0') ?? 0)}',
+                                          style: const TextStyle(
+                                            color: Color(0xFFF5F5F5),
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 24,
+                                          ),
                                         ),
-                                      ),
-                                      Text(
-                                        book.authorName ?? 'No Author',
-                                        style: TextStyle(
-                                          color: Color(0xFFF5F5F5),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Text(
-                                    'Rs ${NumberFormat('#,##0.00').format(double.tryParse(book.price ?? '0') ?? 0)}',
-                                    style: TextStyle(
-                                      color: Color(0xFFF5F5F5),
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 24,
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
-      ),
+            )
+          : SizedBox(
+              height: 380,
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: filteredBooks.length,
+                      itemBuilder: (context, index) {
+                        final book = filteredBooks[index];
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(8.0),
+                          child: Container(
+                            width: 220,
+                            margin: const EdgeInsets.only(right: 16.0),
+                            decoration: BoxDecoration(
+                              color: Color(0xFFF5F5F5),
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                            child: Column(
+                              children: [
+                                Image.network(
+                                  book.imageUrl ?? '',
+                                  height: 160,
+                                  width: double.infinity,
+                                  fit: BoxFit.contain,
+                                ),
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    width: double.infinity,
+                                    color: Color(0xFF121212),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              book.genre ?? 'No Genre',
+                                              style: TextStyle(
+                                                color: Color(0xFFF5F5F5),
+                                              ),
+                                            ),
+                                            Text(
+                                              book.title ?? 'No Title',
+                                              style: TextStyle(
+                                                color: Color(0xFFF5F5F5),
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 20,
+                                              ),
+                                            ),
+                                            Text(
+                                              book.authorName ?? 'No Author',
+                                              style: TextStyle(
+                                                color: Color(0xFFF5F5F5),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Text(
+                                          'Rs ${NumberFormat('#,##0.00').format(double.tryParse(book.price ?? '0') ?? 0)}',
+                                          style: TextStyle(
+                                            color: Color(0xFFF5F5F5),
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 24,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
     );
   }
 }
