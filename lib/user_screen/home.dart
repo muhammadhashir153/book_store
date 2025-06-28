@@ -1,3 +1,4 @@
+import 'package:book_store/user_screen/pages/single_book.dart';
 import 'package:book_store/user_screen/pages/user_home.dart';
 import 'package:flutter/material.dart';
 import 'package:book_store/services/book_services.dart';
@@ -115,14 +116,88 @@ class _UserHomePageState extends State<UserHomePage> {
         key: _scaffoldKey,
         endDrawer: Drawer(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const DrawerHeader(child: Text("Your Cart")),
-              const ListTile(title: Text("Item 1")),
-              const ListTile(title: Text("Item 2")),
-              ElevatedButton(onPressed: () {}, child: const Text("Checkout")),
+              const DrawerHeader(
+                child: Text(
+                  "Your Wishlist",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+
+              // Wrap the list in Expanded to avoid centering and allow full height usage
+              if (isLoadingWishlist)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(),
+                )
+              else if (wishlistBooks.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text("Your wishlist is empty."),
+                )
+              else
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    itemCount: wishlistBooks.length,
+                    itemBuilder: (context, index) {
+                      final book = wishlistBooks[index];
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8
+                        ),
+                        leading: Image.network(
+                          book.imageUrl ?? '',
+                          width: 50,
+                          height: 70,
+                          fit: BoxFit.cover,
+                        ),
+                        title: Text(book.title ?? 'No Title'),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => BookSingle(bookId: book.id!),
+                            ),
+                          );
+                        },
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () async {
+                            await WishlistService.removeFromWishlist(
+                              userId!,
+                              book.id!,
+                            );
+                            setState(() {
+                              wishlistBooks.removeAt(index);
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Removed from wishlist"),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+              // Optional: button at the bottom
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Optional: navigate to a full wishlist screen
+                  },
+                  child: const Text("View Full Wishlist"),
+                ),
+              ),
             ],
           ),
         ),
+
         appBar: AppBar(
           title: Text(_titles[_selectedIndex]),
           automaticallyImplyLeading: false,

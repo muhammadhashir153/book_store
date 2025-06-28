@@ -74,32 +74,32 @@ class _AllBooksState extends State<AllBooks> {
     }
   }
 
+  Future<void> _addToCart(int index) async {
+    if (userId == null || userId!.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("User not logged in")));
+      return;
+    }
 
-Future<void> _addToCart(int index) async {
-  if (userId == null || userId!.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("User not logged in")),
+    final book = _books[index];
+    final bookId = book.id;
+    final price = book.price ?? '0';
+
+    await CartService.addToCart(
+      userId: userId!,
+      bookId: bookId,
+      quantity: 1,
+      finalPrice: price,
     );
-    return;
+
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Added to cart")));
+    }
   }
 
-  final book = _books[index];
-  final bookId = book.id;
-  final price = book.price ?? '0';
-
-  await CartService.addToCart(
-    userId: userId!,
-    bookId: bookId,
-    quantity: 1,
-    finalPrice: price,
-  );
-
-  if (mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Added to cart")),
-    );
-  }
-}
   @override
   void initState() {
     super.initState();
@@ -237,8 +237,8 @@ Future<void> _addToCart(int index) async {
                                       ),
                                       const SizedBox(width: 8),
                                       IconButton(
-                                          onPressed: () {
-                                         _addToCart(index);
+                                        onPressed: () {
+                                          _addToCart(index);
                                         },
                                         icon: Icon(
                                           Icons.shopping_cart,
