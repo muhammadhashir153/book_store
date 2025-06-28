@@ -30,7 +30,9 @@ class _AllBooksState extends State<AllBooks> {
     userId = prefs.getString('uid') ?? '';
   }
 
-  Future<void> _addToWishLIst(index) async {
+  Set<String> _wishlistBookIds = {};
+
+  Future<void> toggleWishlist(BuildContext context, String bookId) async {
     if (userId == null || userId!.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -38,12 +40,37 @@ class _AllBooksState extends State<AllBooks> {
       return;
     }
 
-    final bookId = _books[index].id;
-    await WishlistService.addToWishlist(userId!, bookId);
-    if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Added to wishlist")));
+    if (_wishlistBookIds.contains(bookId)) {
+      await WishlistService.removeFromWishlist(userId!, bookId);
+      if (mounted) {
+        setState(() {
+          _wishlistBookIds.remove(bookId);
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Removed from wishlist")));
+      }
+    } else {
+      await WishlistService.addToWishlist(userId!, bookId);
+      if (mounted) {
+        setState(() {
+          _wishlistBookIds.add(bookId);
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Added to wishlist")));
+      }
+    }
+  }
+
+  Future<void> _fetchWishlist() async {
+    if (userId != null && userId!.isNotEmpty) {
+      final fetchedWishlist = await WishlistService.getWishlistForUser(userId!);
+      setState(() {
+        _wishlistBookIds = fetchedWishlist
+            .map<String>((bookMap) => bookMap['bookId']!)
+            .toSet();
+      });
     }
   }
 
@@ -76,8 +103,13 @@ Future<void> _addToCart(int index) async {
   @override
   void initState() {
     super.initState();
-    _fetchBooks();
-    _decideRoute();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    await _decideRoute();
+    await _fetchBooks();
+    await _fetchWishlist();
   }
 
   @override
@@ -190,11 +222,17 @@ Future<void> _addToCart(int index) async {
                                       const SizedBox(width: 8),
                                       IconButton(
                                         onPressed: () {
-                                          _addToWishLIst(index);
+                                          toggleWishlist(context, book.id);
                                         },
                                         icon: Icon(
-                                          Icons.favorite_border,
-                                          color: Color(0xFFDEDEDE),
+                                          _wishlistBookIds.contains(book.id)
+                                              ? Icons.favorite
+                                              : Icons.favorite_border,
+
+                                          color:
+                                              _wishlistBookIds.contains(book.id)
+                                              ? Colors.red
+                                              : Color(0xFFDEDEDE),
                                         ),
                                       ),
                                       const SizedBox(width: 8),

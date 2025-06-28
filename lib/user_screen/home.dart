@@ -17,8 +17,8 @@ class _UserHomePageState extends State<UserHomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _selectedIndex = 0;
   String? userId;
-List<BookModel> wishlistBooks = [];
-bool isLoadingWishlist = false;
+  List<BookModel> wishlistBooks = [];
+  bool isLoadingWishlist = false;
 
   final List<String> _titles = [
     'Happy Reading!',
@@ -28,38 +28,37 @@ bool isLoadingWishlist = false;
   ];
 
   Future<void> _loadUserAndWishlist() async {
-  final prefs = await SharedPreferences.getInstance();
-  userId = prefs.getString('uid') ?? '';
-  await _fetchWishlist();
-}
-
-Future<void> _fetchWishlist() async {
-  if (userId == null || userId!.isEmpty) return;
-
-  setState(() {
-    isLoadingWishlist = true;
-  });
-
-  final bookIds = await WishlistService.getWishlistForUser(userId!);
-  List<BookModel> books = [];
-
-  for (final id in bookIds) {
-    final book = await BookService.getBookById(id['bookId']!);
-    if (book != null) books.add(book);
+    final prefs = await SharedPreferences.getInstance();
+    userId = prefs.getString('uid') ?? '';
+    await _fetchWishlist();
   }
 
-  setState(() {
-    wishlistBooks = books;
-    isLoadingWishlist = false;
-  });
-}
+  Future<void> _fetchWishlist() async {
+    if (userId == null || userId!.isEmpty) return;
+
+    setState(() {
+      isLoadingWishlist = true;
+    });
+
+    final bookIds = await WishlistService.getWishlistForUser(userId!);
+    List<BookModel> books = [];
+
+    for (final id in bookIds) {
+      final book = await BookService.getBookById(id['bookId']!);
+      if (book != null) books.add(book);
+    }
+
+    setState(() {
+      wishlistBooks = books;
+      isLoadingWishlist = false;
+    });
+  }
 
   @override
-void initState() {
-  super.initState();
-  _loadUserAndWishlist();
-}
-
+  void initState() {
+    super.initState();
+    _loadUserAndWishlist();
+  }
 
   final List<GlobalKey<NavigatorState>> _navigatorKeys = List.generate(
     4,
