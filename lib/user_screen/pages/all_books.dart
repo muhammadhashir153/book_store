@@ -1,4 +1,5 @@
 import 'package:book_store/services/book_services.dart';
+import 'package:book_store/user_screen/pages/single_book.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -113,7 +114,14 @@ class _AllBooksState extends State<AllBooks> {
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
                                       ElevatedButton(
-                                        onPressed: () {},
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => BookSingle(bookId: book.id),
+                                            ),
+                                          );
+                                        },
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Color(0xFFDEDEDE),
                                         ),
