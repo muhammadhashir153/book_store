@@ -18,18 +18,18 @@ class WishlistService {
   }
 
   // Get all wishlisted books for a specific user
-static Future<List<Map<String, String>>> getWishlistForUser(String userId) async {
-  final snapshot = await _wishlistCollection
-      .where('user-id', isEqualTo: userId)
-      .get();
+  static Future<List<Map<String, String>>> getWishlistForUser(
+    String userId,
+  ) async {
+    final snapshot = await _wishlistCollection
+        .where('user-id', isEqualTo: userId)
+        .get();
 
-  return snapshot.docs.map((doc) {
-    return {
-      'wishlistId': doc.id,
-      'bookId': doc['book-id'] as String,
-    };
-  }).toList();
-}
+    return snapshot.docs.map((doc) {
+      return {'wishlistId': doc.id, 'bookId': doc['book-id'] as String};
+    }).toList();
+  }
+
   // Remove a book from wishlist by user and book ID
   static Future<void> removeFromWishlist(String userId, String bookId) async {
     final snapshot = await _wishlistCollection
