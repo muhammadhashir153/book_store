@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:book_store/services/wishlist_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:book_store/services/cart_services.dart';
 
 class AllBooks extends StatefulWidget {
   const AllBooks({super.key});
@@ -73,6 +74,32 @@ class _AllBooksState extends State<AllBooks> {
     }
   }
 
+
+Future<void> _addToCart(int index) async {
+  if (userId == null || userId!.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("User not logged in")),
+    );
+    return;
+  }
+
+  final book = _books[index];
+  final bookId = book.id;
+  final price = book.price ?? '0';
+
+  await CartService.addToCart(
+    userId: userId!,
+    bookId: bookId,
+    quantity: 1,
+    finalPrice: price,
+  );
+
+  if (mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Added to cart")),
+    );
+  }
+}
   @override
   void initState() {
     super.initState();
@@ -210,7 +237,9 @@ class _AllBooksState extends State<AllBooks> {
                                       ),
                                       const SizedBox(width: 8),
                                       IconButton(
-                                        onPressed: () {},
+                                          onPressed: () {
+                                         _addToCart(index);
+                                        },
                                         icon: Icon(
                                           Icons.shopping_cart,
                                           color: Color(0xFFDEDEDE),
