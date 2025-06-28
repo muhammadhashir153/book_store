@@ -27,21 +27,30 @@ class _AllBooksState extends State<AllBooks> {
     final prefs = await SharedPreferences.getInstance();
 
     userId = prefs.getString('uid') ?? '';
-    final String role = prefs.getString('role') ?? 'user';
+  }
 
-    
-    // if (uid.isNotEmpty && role != 'user') {
-    //   _route = AppRoutes.viewBook; // you can define this route
-    // } else if (uid.isNotEmpty && role == 'user') {
-    //   _route = AppRoutes.home;
-    // }
+  Future<void> _addToWishLIst(index) async {
+    if (userId == null || userId!.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("User not logged in")));
+      return;
+    }
+
+    final bookId = _books[index].id;
+    await WishlistService.addToWishlist(userId!, bookId);
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Added to wishlist")));
+    }
   }
 
   @override
   void initState() {
     super.initState();
     _fetchBooks();
-     _decideRoute();
+    _decideRoute();
   }
 
   @override
@@ -136,7 +145,8 @@ class _AllBooksState extends State<AllBooks> {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (_) => BookSingle(bookId: book.id),
+                                              builder: (_) =>
+                                                  BookSingle(bookId: book.id),
                                             ),
                                           );
                                         },
@@ -152,20 +162,9 @@ class _AllBooksState extends State<AllBooks> {
                                       ),
                                       const SizedBox(width: 8),
                                       IconButton(
-                                         onPressed: () async {
-  if (userId == null || userId!.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("User not logged in")),
-    );
-    return;
-  }
-
-  final bookId = _books[index].id;
-  await WishlistService.addToWishlist(userId!, bookId);
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text("Added to wishlist")),
-  );
-},
+                                        onPressed: () {
+                                          _addToWishLIst(index);
+                                        },
                                         icon: Icon(
                                           Icons.favorite_border,
                                           color: Color(0xFFDEDEDE),
