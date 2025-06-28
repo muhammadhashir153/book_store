@@ -4,6 +4,7 @@ import 'package:book_store/services/book_services.dart';
 import 'package:book_store/models/book_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:book_store/services/wishlist_services.dart';
+import 'package:book_store/user_screen/pages/cart_page.dart';
 
 class UserHomePage extends StatefulWidget {
   const UserHomePage({super.key});
@@ -84,7 +85,7 @@ void initState() {
             page = const Center(child: CircularProgressIndicator());
             break;
           case 2:
-            page = const Center(child: CircularProgressIndicator());
+            page = const CartPage();
             break;
           case 3:
             page = const Center(child: CircularProgressIndicator());
