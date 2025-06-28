@@ -43,7 +43,7 @@ Future<void> _fetchWishlist() async {
   List<BookModel> books = [];
 
   for (final id in bookIds) {
-    final book = await BookService.getBookById(id);
+    final book = await BookService.getBookById(id['bookId']!);
     if (book != null) books.add(book);
   }
 

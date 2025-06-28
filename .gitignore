@@ -40,6 +40,7 @@ migrate_working_dir/
 # Firebase (Sensitive)
 lib/firebase_options.dart
 android/app/google-services.json
+android/app/google-services_old.json
 ios/Runner/GoogleService-Info.plist
 
 # Obfuscation and Symbolication
