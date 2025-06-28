@@ -10,26 +10,22 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  String _route = AppRoutes.home; // default
+  String _route = AppRoutes.landing; // default
 
-  @override
-  void initState() {
-    super.initState();
-    _decideRoute(); // start decision logic
-  }
 
-  Future<void> _decideRoute() async {
+    Future<void> _decideRoute() async {
     final prefs = await SharedPreferences.getInstance();
 
     final String uid = prefs.getString('uid') ?? '';
     final String role = prefs.getString('role') ?? 'user';
 
-    
-    // if (uid.isNotEmpty && role != 'user') {
-    //   _route = AppRoutes.viewBook; // you can define this route
-    // } else if (uid.isNotEmpty && role == 'user') {
-    //   _route = AppRoutes.home;
-    // }
+    print(role);
+    print(uid);
+    if (uid.isNotEmpty && role != 'user') {
+      _route = AppRoutes.viewBook; // you can define this route
+    } else if (uid.isNotEmpty && role == 'user') {
+      _route = AppRoutes.home;
+    }
 
     
     await Future.delayed(const Duration(milliseconds: 1500));
@@ -38,6 +34,14 @@ class _SplashScreenState extends State<SplashScreen> {
       Navigator.pushReplacementNamed(context, _route);
     }
   }
+
+  @override
+  void initState() {
+    super.initState();
+    _decideRoute(); // start decision logic
+  }
+
+
 
   @override
   Widget build(BuildContext context) {

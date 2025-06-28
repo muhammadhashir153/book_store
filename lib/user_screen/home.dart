@@ -1,5 +1,9 @@
 import 'package:book_store/user_screen/pages/user_home.dart';
 import 'package:flutter/material.dart';
+import 'package:book_store/services/book_services.dart';
+import 'package:book_store/models/book_models.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:book_store/services/wishlist_services.dart';
 
 class UserHomePage extends StatefulWidget {
   const UserHomePage({super.key});
@@ -11,6 +15,9 @@ class UserHomePage extends StatefulWidget {
 class _UserHomePageState extends State<UserHomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _selectedIndex = 0;
+  String? userId;
+List<BookModel> wishlistBooks = [];
+bool isLoadingWishlist = false;
 
   final List<String> _titles = [
     'Happy Reading!',
@@ -18,6 +25,40 @@ class _UserHomePageState extends State<UserHomePage> {
     'Cart',
     'Account',
   ];
+
+  Future<void> _loadUserAndWishlist() async {
+  final prefs = await SharedPreferences.getInstance();
+  userId = prefs.getString('uid') ?? '';
+  await _fetchWishlist();
+}
+
+Future<void> _fetchWishlist() async {
+  if (userId == null || userId!.isEmpty) return;
+
+  setState(() {
+    isLoadingWishlist = true;
+  });
+
+  final bookIds = await WishlistService.getWishlistForUser(userId!);
+  List<BookModel> books = [];
+
+  for (final id in bookIds) {
+    final book = await BookService.getBookById(id);
+    if (book != null) books.add(book);
+  }
+
+  setState(() {
+    wishlistBooks = books;
+    isLoadingWishlist = false;
+  });
+}
+
+  @override
+void initState() {
+  super.initState();
+  _loadUserAndWishlist();
+}
+
 
   final List<GlobalKey<NavigatorState>> _navigatorKeys = List.generate(
     4,

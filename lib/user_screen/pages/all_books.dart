@@ -1,6 +1,8 @@
 import 'package:book_store/services/book_services.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:book_store/services/wishlist_services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AllBooks extends StatefulWidget {
   const AllBooks({super.key});
@@ -11,6 +13,7 @@ class AllBooks extends StatefulWidget {
 
 class _AllBooksState extends State<AllBooks> {
   List _books = [];
+  String? userId;
 
   Future<void> _fetchBooks() async {
     final fetchedBooks = await BookService.getAllBooks();
@@ -19,10 +22,25 @@ class _AllBooksState extends State<AllBooks> {
     });
   }
 
+  Future<void> _decideRoute() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    userId = prefs.getString('uid') ?? '';
+    final String role = prefs.getString('role') ?? 'user';
+
+    
+    // if (uid.isNotEmpty && role != 'user') {
+    //   _route = AppRoutes.viewBook; // you can define this route
+    // } else if (uid.isNotEmpty && role == 'user') {
+    //   _route = AppRoutes.home;
+    // }
+  }
+
   @override
   void initState() {
     super.initState();
     _fetchBooks();
+     _decideRoute();
   }
 
   @override
@@ -126,7 +144,20 @@ class _AllBooksState extends State<AllBooks> {
                                       ),
                                       const SizedBox(width: 8),
                                       IconButton(
-                                        onPressed: () {},
+                                         onPressed: () async {
+  if (userId == null || userId!.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("User not logged in")),
+    );
+    return;
+  }
+
+  final bookId = _books[index].id;
+  await WishlistService.addToWishlist(userId!, bookId);
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text("Added to wishlist")),
+  );
+},
                                         icon: Icon(
                                           Icons.favorite_border,
                                           color: Color(0xFFDEDEDE),
