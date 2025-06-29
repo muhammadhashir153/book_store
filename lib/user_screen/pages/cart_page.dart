@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:book_store/services/cart_services.dart';
+import 'package:book_store/user_screen/pages/checkout_page.dart';
 import 'package:intl/intl.dart';
 
 class CartPage extends StatefulWidget {
@@ -66,9 +67,14 @@ class _CartPageState extends State<CartPage> {
             total + (double.tryParse(item['finalPrice']) ?? 0));
   }
 
-  void _goToCheckout() {
-    Navigator.pushNamed(context, '/checkout'); // or use a widget directly
-  }
+void _goToCheckout() {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => CheckoutPage(userId: userId!),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
