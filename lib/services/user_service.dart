@@ -74,8 +74,14 @@ class UserService {
   }
 
   static Future<bool> logoutUser() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+        // Store basic info
     try {
       await FirebaseAuth.instance.signOut();
+      await prefs.remove('isRemeber');
+      await prefs.remove('uid');
+      await prefs.remove('role');
       return true;
     } catch (e) {
       print("Error logging out user: $e");

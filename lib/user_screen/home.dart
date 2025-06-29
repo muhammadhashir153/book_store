@@ -16,6 +16,7 @@ class UserHomePage extends StatefulWidget {
 
 class _UserHomePageState extends State<UserHomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final PageController _pageController = PageController();
   int _selectedIndex = 0;
   String? userId;
   List<BookModel> wishlistBooks = [];
@@ -26,6 +27,13 @@ class _UserHomePageState extends State<UserHomePage> {
     'Categories',
     'Cart',
     'Account',
+  ];
+
+  final List<Widget> _pages = [
+    const HomeSupportPage(),
+    Center(child: CircularProgressIndicator()),
+    const CartPage(),
+    Center(child: CircularProgressIndicator()),
   ];
 
   Future<void> _loadUserAndWishlist() async {
@@ -61,179 +69,128 @@ class _UserHomePageState extends State<UserHomePage> {
     _loadUserAndWishlist();
   }
 
-  final List<GlobalKey<NavigatorState>> _navigatorKeys = List.generate(
-    4,
-    (_) => GlobalKey<NavigatorState>(),
-  );
-
   void _onNavTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  Widget _buildTabNavigator(int index) {
-    return Navigator(
-      key: _navigatorKeys[index],
-      onGenerateRoute: (RouteSettings settings) {
-        Widget page;
-        switch (index) {
-          case 0:
-            page = const HomeSupportPage();
-            break;
-          case 1:
-            page = const Center(child: CircularProgressIndicator());
-            break;
-          case 2:
-            page = const CartPage();
-            break;
-          case 3:
-            page = const Center(child: CircularProgressIndicator());
-            break;
-          default:
-            page = const Center(child: Text("Unknown"));
-        }
-        return MaterialPageRoute(builder: (_) => page);
-      },
-    );
+    setState(() => _selectedIndex = index);
+    _pageController.jumpToPage(index);
   }
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (!didPop) {
-          final navigator = _navigatorKeys[_selectedIndex].currentState;
-          if (navigator != null && navigator.canPop()) {
-            navigator.pop();
-          } else {
-            Navigator.of(context).maybePop();
-          }
-        }
-      },
-      child: Scaffold(
-        key: _scaffoldKey,
-        endDrawer: Drawer(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const DrawerHeader(
-                child: Text(
-                  "Your Wishlist",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
+    return Scaffold(
+      key: _scaffoldKey,
+      endDrawer: Drawer(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const DrawerHeader(
+              child: Text(
+                "Your Wishlist",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-
-              // Wrap the list in Expanded to avoid centering and allow full height usage
-              if (isLoadingWishlist)
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: CircularProgressIndicator(),
-                )
-              else if (wishlistBooks.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text("Your wishlist is empty."),
-                )
-              else
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    itemCount: wishlistBooks.length,
-                    itemBuilder: (context, index) {
-                      final book = wishlistBooks[index];
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8
-                        ),
-                        leading: Image.network(
-                          book.imageUrl ?? '',
-                          width: 50,
-                          height: 70,
-                          fit: BoxFit.cover,
-                        ),
-                        title: Text(book.title ?? 'No Title'),
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => BookSingle(bookId: book.id!),
+            ),
+            if (isLoadingWishlist)
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(),
+              )
+            else if (wishlistBooks.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text("Your wishlist is empty."),
+              )
+            else
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  itemCount: wishlistBooks.length,
+                  itemBuilder: (context, index) {
+                    final book = wishlistBooks[index];
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      leading: Image.network(
+                        book.imageUrl ?? '',
+                        width: 50,
+                        height: 70,
+                        fit: BoxFit.cover,
+                      ),
+                      title: Text(book.title ?? 'No Title'),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => BookSingle(bookId: book.id!),
+                          ),
+                        );
+                      },
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () async {
+                          await WishlistService.removeFromWishlist(
+                            userId!,
+                            book.id!,
+                          );
+                          setState(() {
+                            wishlistBooks.removeAt(index);
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Removed from wishlist"),
                             ),
                           );
                         },
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () async {
-                            await WishlistService.removeFromWishlist(
-                              userId!,
-                              book.id!,
-                            );
-                            setState(() {
-                              wishlistBooks.removeAt(index);
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Removed from wishlist"),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-              // Optional: button at the bottom
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Optional: navigate to a full wishlist screen
+                      ),
+                    );
                   },
-                  child: const Text("View Full Wishlist"),
                 ),
               ),
-            ],
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton(
+                onPressed: () {},
+                child: const Text("View Full Wishlist"),
+              ),
+            ),
+          ],
+        ),
+      ),
+      appBar: AppBar(
+        title: Text(_titles[_selectedIndex]),
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.favorite_border),
+            onPressed: () {
+              _scaffoldKey.currentState?.openEndDrawer();
+            },
           ),
-        ),
-
-        appBar: AppBar(
-          title: Text(_titles[_selectedIndex]),
-          automaticallyImplyLeading: false,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.favorite_border),
-              onPressed: () {
-                _scaffoldKey.currentState?.openEndDrawer();
-              },
-            ),
-          ],
-        ),
-        body: IndexedStack(
-          index: _selectedIndex,
-          children: List.generate(4, _buildTabNavigator),
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onNavTapped,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: const Color(0xFF0D0D0D),
-          unselectedItemColor: Colors.black54,
-          backgroundColor: const Color(0xffE6E6E6),
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.category),
-              label: 'Categories',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_cart),
-              label: 'Cart',
-            ),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Account'),
-          ],
-        ),
+        ],
+      ),
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) => setState(() => _selectedIndex = index),
+        children: _pages,
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onNavTapped,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: const Color(0xFF0D0D0D),
+        unselectedItemColor: Colors.black54,
+        backgroundColor: const Color(0xffE6E6E6),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.category),
+            label: 'Categories',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: 'Cart',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Account'),
+        ],
       ),
     );
   }

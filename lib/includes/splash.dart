@@ -10,10 +10,9 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  String _route = AppRoutes.landing; // default
+  String _route = AppRoutes.landing;
 
-
-    Future<void> _decideRoute() async {
+  Future<void> _decideRoute() async {
     final prefs = await SharedPreferences.getInstance();
 
     final String uid = prefs.getString('uid') ?? '';
@@ -27,7 +26,6 @@ class _SplashScreenState extends State<SplashScreen> {
       _route = AppRoutes.home;
     }
 
-    
     await Future.delayed(const Duration(milliseconds: 1500));
 
     if (mounted) {
@@ -40,8 +38,6 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     _decideRoute(); // start decision logic
   }
-
-
 
   @override
   Widget build(BuildContext context) {

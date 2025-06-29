@@ -24,7 +24,7 @@ class _RegisterState extends State<Register> {
 
   String getAvatarUrl(String name) {
     String seed = name.isNotEmpty ? name.trim()[0].toUpperCase() : 'U';
-    return 'https://api.dicebear.com/8.x/initials/svg?seed=$seed';
+    return 'https://api.dicebear.com/8.x/initials/png?seed=$seed';
   }
 
   final TextEditingController _nameController = TextEditingController();
