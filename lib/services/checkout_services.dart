@@ -6,27 +6,31 @@ class CheckoutService {
 
   // Add a new order
   static Future<void> placeOrder({
-    required String userId,
-    required String bookId,
-    required String price,
-    required int quantity,
-    String status = 'orderReceived',
-  }) async {
-    print('Placing order: userId=$userId, bookId=$bookId, qty=$quantity, price=$price');
+  required String userId,
+  required String bookId,
+  required String price,
+  required int quantity,
+  required String invoiceNum, // 👈 new
+  String status = 'orderReceived',
+}) async {
+  print('Placing order: userId=$userId, bookId=$bookId, qty=$quantity, price=$price, invoice=$invoiceNum');
 
-    if (userId.isEmpty || bookId.isEmpty || price.isEmpty || quantity <= 0) {
-      print('❌ Invalid order data');
-      return;
-    }
-
-    await _orderCollection.add({
-      'user-id': userId,
-      'book-id': bookId,
-      'price': price,
-      'quantity': quantity,
-      'status': status,
-    });
+  if (userId.isEmpty || bookId.isEmpty || price.isEmpty || quantity <= 0) {
+    print('❌ Invalid order data');
+    return;
   }
+
+  await _orderCollection.add({
+    'user-id': userId,
+    'book-id': bookId,
+    'price': price,
+    'quantity': quantity,
+    'status': status,
+    'invoice-num': invoiceNum, // 👈 store invoice number
+    'timestamp': FieldValue.serverTimestamp(),
+  });
+}
+
 
   // Get all orders for a specific user
   static Future<List<Map<String, dynamic>>> getOrdersForUser(String userId) async {

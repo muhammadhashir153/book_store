@@ -112,16 +112,21 @@ void handlePayNow() async {
     return;
   }
 
+  // 🔢 Generate invoice number
+  final invoiceNum = DateTime.now().millisecondsSinceEpoch.toString();
+
+  // 🧾 Loop through each item and assign same invoice number
   for (final item in cartItems) {
     await CheckoutService.placeOrder(
       userId: widget.userId,
       bookId: item['book-id'].toString(),
       price: item['final-price'].toString(),
       quantity: item['quantity'],
+      invoiceNum: invoiceNum,
     );
   }
 
-  // Optional: Clear the cart after placing orders
+  // 🗑️ Clear the cart
   final cartSnapshot = await FirebaseFirestore.instance
       .collection('Cart')
       .where('user-id', isEqualTo: widget.userId)
@@ -132,11 +137,12 @@ void handlePayNow() async {
   }
 
   ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('Order placed. Total: \$${totalAmount.toStringAsFixed(2)}')),
+    SnackBar(content: Text('Order placed with Invoice #$invoiceNum')),
   );
 
-  Navigator.pop(context); // Go back to previous screen (e.g. cart)
+  Navigator.pop(context, "/home"); // return to previous screen
 }
+
 
   @override
   Widget build(BuildContext context) {
