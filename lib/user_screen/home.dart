@@ -1,3 +1,4 @@
+import 'package:book_store/route_observer.dart';
 import 'package:book_store/user_screen/pages/single_book.dart';
 import 'package:book_store/user_screen/pages/user_home.dart';
 import 'package:flutter/material.dart';
@@ -14,7 +15,7 @@ class UserHomePage extends StatefulWidget {
   State<UserHomePage> createState() => _UserHomePageState();
 }
 
-class _UserHomePageState extends State<UserHomePage> {
+class _UserHomePageState extends State<UserHomePage> with RouteAware {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final PageController _pageController = PageController();
   int _selectedIndex = 0;
@@ -67,6 +68,23 @@ class _UserHomePageState extends State<UserHomePage> {
   void initState() {
     super.initState();
     _loadUserAndWishlist();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _fetchWishlist();
   }
 
   void _onNavTapped(int index) {
@@ -169,7 +187,10 @@ class _UserHomePageState extends State<UserHomePage> {
       ),
       body: PageView(
         controller: _pageController,
-        onPageChanged: (index) => setState(() => _selectedIndex = index),
+        onPageChanged: (index) {
+          setState(() => _selectedIndex = index);
+          _fetchWishlist();
+        },
         children: _pages,
       ),
       bottomNavigationBar: BottomNavigationBar(

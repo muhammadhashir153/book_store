@@ -1,21 +1,32 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CartService {
-  static final CollectionReference _cartCollection =
-      FirebaseFirestore.instance.collection('Cart');
+  static final CollectionReference _cartCollection = FirebaseFirestore.instance
+      .collection('Cart');
 
   // Add a book to cart
-  static Future<void> addToCart({
+  static Future<bool> addToCart({
     required String userId,
     required String bookId,
     required int quantity,
     required String finalPrice,
   }) async {
-    print('Adding to cart: userId=$userId, bookId=$bookId, qty=$quantity, price=$finalPrice');
+    print(
+      'Adding to cart: userId=$userId, bookId=$bookId, qty=$quantity, price=$finalPrice',
+    );
 
-    if (userId.isEmpty || bookId.isEmpty || quantity <= 0 || finalPrice.isEmpty) {
+    bool isAlreadyInCart = await isBookInCart(userId, bookId);
+    if (isAlreadyInCart) {
+      print('❌ Book already in cart');
+      return false;
+    }
+
+    if (userId.isEmpty ||
+        bookId.isEmpty ||
+        quantity <= 0 ||
+        finalPrice.isEmpty) {
       print('❌ Invalid input');
-      return;
+      return false;
     }
 
     await _cartCollection.add({
@@ -24,10 +35,13 @@ class CartService {
       'quantity': quantity,
       'final-price': finalPrice,
     });
+    return true;
   }
 
   // Get all cart items for a specific user
-  static Future<List<Map<String, dynamic>>> getCartForUser(String userId) async {
+  static Future<List<Map<String, dynamic>>> getCartForUser(
+    String userId,
+  ) async {
     final snapshot = await _cartCollection
         .where('user-id', isEqualTo: userId)
         .get();
@@ -59,6 +73,7 @@ class CartService {
     final snapshot = await _cartCollection
         .where('user-id', isEqualTo: userId)
         .where('book-id', isEqualTo: bookId)
+        .limit(1)
         .get();
 
     return snapshot.docs.isNotEmpty;

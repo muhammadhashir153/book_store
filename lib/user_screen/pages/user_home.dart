@@ -42,9 +42,9 @@ class _HomeSupportPageState extends State<HomeSupportPage> {
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const AllBooks()),
-                        );
+                        Navigator.of(
+                          context,
+                        ).push(MaterialPageRoute(builder: (_) => AllBooks()));
                       },
                       child: Text(
                         "See All",

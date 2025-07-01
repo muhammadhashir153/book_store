@@ -102,9 +102,17 @@ class _AllBooksState extends State<AllBooks> {
 
   Future<void> _addToCart(int index) async {
     if (userId == null || userId!.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("User not logged in")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF121212),
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          content: Text("User not logged in"),
+        ),
+      );
       return;
     }
 
@@ -112,17 +120,43 @@ class _AllBooksState extends State<AllBooks> {
     final bookId = book.id;
     final price = book.price ?? '0';
 
-    await CartService.addToCart(
+    bool isAdded = await CartService.addToCart(
       userId: userId!,
       bookId: bookId,
       quantity: 1,
       finalPrice: price,
     );
 
-    if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Added to cart")));
+    if (isAdded && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF121212),
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          content: const Text(
+            "Added to cart",
+            style: TextStyle(color: Color(0xFFDEDEDE)),
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF121212),
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          content: const Text(
+            "Book already in cart",
+            style: TextStyle(color: Color(0xFFDEDEDE)),
+          ),
+        ),
+      );
     }
   }
 
