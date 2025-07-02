@@ -2,6 +2,7 @@ import 'package:book_store/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:book_store/services/checkout_services.dart';
+import 'package:intl/intl.dart';
 
 class CheckoutPage extends StatefulWidget {
   final String userId;
@@ -57,27 +58,98 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Future<void> updateAddress() async {
-    final controller = TextEditingController();
-    final result = await showDialog<String>(
+    final streetController = TextEditingController();
+    final cityController = TextEditingController();
+    final postalController = TextEditingController();
+
+    showModalBottomSheet(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text("Enter Delivery Address"),
-        content: TextField(controller: controller),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: Text("Save"),
-          ),
-        ],
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.95,
+          builder: (_, controller) {
+            return SingleChildScrollView(
+              controller: controller,
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                left: 24,
+                right: 24,
+                top: 24,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Enter Delivery Address',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: streetController,
+                    decoration: InputDecoration(labelText: 'Street Address'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: cityController,
+                    decoration: InputDecoration(labelText: 'City'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: postalController,
+                    decoration: InputDecoration(labelText: 'Postal Code'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Color(0xFF121212),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: TextButton(
+                      onPressed: () async {
+                        final street = streetController.text.trim();
+                        final city = cityController.text.trim();
+                        final postal = postalController.text.trim();
+
+                        if (street.isEmpty || city.isEmpty || postal.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('All fields are required')),
+                          );
+                          return;
+                        }
+
+                        final fullAddress = '$street, $city, $postal';
+
+                        await FirebaseFirestore.instance
+                            .collection('Users')
+                            .doc(widget.userId)
+                            .update({'shippingAddress': fullAddress});
+
+                        Navigator.pop(context);
+                        fetchUserAddress();
+                      },
+                      child: Text(
+                        "Save Address",
+                        style: TextStyle(color: Color(0xFFDEDEDE)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
-    if (result != null && result.isNotEmpty) {
-      await FirebaseFirestore.instance
-          .collection('Users')
-          .doc(widget.userId)
-          .update({'shippingAddress': result});
-      fetchUserAddress();
-    }
   }
 
   Future<void> updateBillingAddress() async {
@@ -123,10 +195,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       return;
     }
 
-    // 🔢 Generate invoice number
     final invoiceNum = DateTime.now().millisecondsSinceEpoch.toString();
-
-    // 🧾 Loop through each item and assign same invoice number
     for (final item in cartItems) {
       await CheckoutService.placeOrder(
         userId: widget.userId,
@@ -137,7 +206,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
       );
     }
 
-    // 🗑️ Clear the cart
     final cartSnapshot = await FirebaseFirestore.instance
         .collection('Cart')
         .where('user-id', isEqualTo: widget.userId)
@@ -151,7 +219,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       SnackBar(content: Text('Order placed with Invoice #$invoiceNum')),
     );
 
-    Navigator.pushNamed(context, AppRoutes.home); // return to previous screen
+    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.thanks, (route) => false);
   }
 
   @override
@@ -159,33 +227,45 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return Scaffold(
       appBar: AppBar(title: Text('Checkout')),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               "Delivering Address",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.left,
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
+            SizedBox(height: 16),
             if (shippingAddress != null && shippingAddress!.isNotEmpty)
               Container(
-                padding: EdgeInsets.all(12),
-                color: Colors.black,
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
                 width: double.infinity,
-                child: Column(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Color(0xFF121212),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      shippingAddress!,
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: updateAddress,
-                        child: Text(
-                          "Change",
-                          style: TextStyle(color: Colors.white),
+                    Expanded(
+                      child: Text(
+                        shippingAddress!,
+                        style: TextStyle(
+                          color: Color(0xFFDEDEDE),
+                          fontSize: 20,
                         ),
+                        softWrap: true,
+                        overflow: TextOverflow.visible,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: updateAddress,
+                      child: Text(
+                        "Change",
+                        style: TextStyle(color: Colors.white),
                       ),
                     ),
                   ],
@@ -197,41 +277,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 child: Text("Add a New Delivery Address"),
               ),
 
-            const SizedBox(height: 20),
-            Text(
-              "Billing Address",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            if (billingAddress != null && billingAddress!.isNotEmpty)
-              Container(
-                padding: EdgeInsets.all(12),
-                color: Colors.black,
-                width: double.infinity,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      billingAddress!,
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: updateBillingAddress,
-                        child: Text(
-                          "Change",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else
-              ElevatedButton(
-                onPressed: updateBillingAddress,
-                child: Text("Add a Billing Address"),
-              ),
             const SizedBox(height: 20),
             Text(
               "Payment Method",
@@ -248,12 +293,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
               },
             ),
             Spacer(),
-            ElevatedButton(
-              onPressed: handlePayNow,
-              style: ElevatedButton.styleFrom(
-                minimumSize: Size(double.infinity, 50),
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Color(0xFF121212),
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: Text("Pay \$${totalAmount.toStringAsFixed(2)}"),
+              child: TextButton(
+                onPressed: handlePayNow,
+                child: Text(
+                  "Pay Rs ${NumberFormat('#,##0.00').format(totalAmount)}",
+                  style: TextStyle(color: Color(0xFFDEDEDE)),
+                ),
+              ),
             ),
           ],
         ),

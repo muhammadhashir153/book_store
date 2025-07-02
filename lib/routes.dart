@@ -7,6 +7,7 @@ import 'package:book_store/user_screen/home.dart';
 import 'package:book_store/user_screen/landing.dart';
 import 'package:book_store/user_screen/pages/all_books.dart';
 import 'package:book_store/user_screen/pages/cart_page.dart';
+import 'package:book_store/user_screen/pages/thanks.dart';
 import 'package:flutter/widgets.dart';
 
 class AppRoutes {
@@ -19,6 +20,7 @@ class AppRoutes {
   static const String register = '/register';
   static const String home = '/home';
   static const String allBook = '/home/books';
+  static const String thanks = '/thanks';
 
   static Map<String, WidgetBuilder> routes = {
     splashScreen: (context) => const SplashScreen(),
@@ -30,5 +32,6 @@ class AppRoutes {
     register: (context) => const Register(),
     home: (context) => const UserHomePage(),
     allBook: (context) => const AllBooks(),
+    thanks: (context) => const Thanks(),
   };
 }
