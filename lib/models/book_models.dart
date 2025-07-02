@@ -39,4 +39,15 @@ class BookModel {
       'imageUrl': imageUrl,
     };
   }
+
+  /// Optional: fallback dummy/null-safe instance
+  static BookModel get empty => BookModel(
+    id: '',
+    title: 'Unknown Book',
+    description: '',
+    authorName: '',
+    price: '0',
+    genre: '',
+    imageUrl: '',
+  );
 }

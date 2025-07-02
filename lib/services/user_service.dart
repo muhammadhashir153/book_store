@@ -76,7 +76,7 @@ class UserService {
   static Future<bool> logoutUser() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-        // Store basic info
+    // Store basic info
     try {
       await FirebaseAuth.instance.signOut();
       await prefs.remove('isRemeber');
@@ -89,91 +89,144 @@ class UserService {
     }
   }
 
-static Future<User?> signInWithGoogle(Map<String, dynamic> userData) async {
-  try {
-    print('Attempting Google sign-in');
-    final GoogleSignIn googleSignIn = GoogleSignIn(
-      clientId: kIsWeb
-          ? '389708759305-3sibfo29sdhf7emp68eg3qld5d3rbhv6.apps.googleusercontent.com'
-          : null,
-    );
+  static Future<User?> signInWithGoogle(Map<String, dynamic> userData) async {
+    try {
+      print('Attempting Google sign-in');
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        clientId: kIsWeb
+            ? '389708759305-3sibfo29sdhf7emp68eg3qld5d3rbhv6.apps.googleusercontent.com'
+            : null,
+      );
 
-    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-    if (googleUser == null) {
-      print("User cancelled Google login or popup blocked.");
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        print("User cancelled Google login or popup blocked.");
+        return null;
+      }
+
+      print("Google user: ${googleUser.displayName}, ${googleUser.email}");
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithCredential(credential);
+
+      final user = userCredential.user;
+      print("Firebase user: ${user?.uid}");
+
+      if (user != null) {
+        final docRef = FirebaseFirestore.instance
+            .collection('Users')
+            .doc(user.uid);
+        final doc = await docRef.get();
+
+        if (!doc.exists) {
+          userData['email'] = user.email;
+          userData['name'] = user.displayName ?? '';
+          userData['profileImage'] = user.photoURL ?? '';
+          await docRef.set(userData);
+          print("User data saved to Firestore.");
+        } else {
+          print("User already exists in Firestore.");
+        }
+      }
+
+      return user;
+    } catch (e, stack) {
+      print("Google login error: $e");
+      print("StackTrace: $stack");
       return null;
     }
+  }
 
-    print("Google user: ${googleUser.displayName}, ${googleUser.email}");
+  static Future<User?> signInWithFacebook(Map<String, dynamic> userData) async {
+    try {
+      final LoginResult result = await FacebookAuth.instance.login();
+      if (result.status != LoginStatus.success) return null;
 
-    final GoogleSignInAuthentication googleAuth =
-        await googleUser.authentication;
+      final OAuthCredential credential = FacebookAuthProvider.credential(
+        result.accessToken!.token,
+      );
 
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithCredential(credential);
 
-    UserCredential userCredential =
-        await FirebaseAuth.instance.signInWithCredential(credential);
+      final user = userCredential.user;
+      if (user != null) {
+        final docRef = FirebaseFirestore.instance
+            .collection('Users')
+            .doc(user.uid);
+        final doc = await docRef.get();
 
-    final user = userCredential.user;
-    print("Firebase user: ${user?.uid}");
+        if (!doc.exists) {
+          userData['email'] = user.email;
+          userData['name'] = user.displayName ?? '';
+          userData['profileImage'] = user.photoURL ?? '';
+          await docRef.set(userData);
+        }
+      }
 
-    if (user != null) {
-      final docRef =
-          FirebaseFirestore.instance.collection('Users').doc(user.uid);
-      final doc = await docRef.get();
+      return user;
+    } catch (e) {
+      print("Facebook login error: $e");
+      return null;
+    }
+  }
 
-      if (!doc.exists) {
-        userData['email'] = user.email;
-        userData['name'] = user.displayName ?? '';
-        userData['profileImage'] = user.photoURL ?? '';
-        await docRef.set(userData);
-        print("User data saved to Firestore.");
+  static Future<Map<String, dynamic>?> getUserData(String userId) async {
+    try {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(userId)
+          .get();
+
+      if (userDoc.exists) {
+        // Handle your user data here
+        return userDoc.data() as Map<String, dynamic>?;
       } else {
-        print("User already exists in Firestore.");
+        print('User not found');
+        return null;
       }
+    } catch (e) {
+      print('Error getting user data: $e');
+      return null;
+    }
+  }
+
+  static Future<void> updateUserData(
+    String userId,
+    Map<String, dynamic> newData,
+  ) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(userId)
+          .update(newData);
+    } catch (e) {
+      print('Error updating user data: $e');
+    }
+  }
+
+  static Future<void> updateUserPassword(
+      String oldPassword, String newPassword) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw Exception("No user is currently signed in.");
     }
 
-    return user;
-  } catch (e, stack) {
-    print("Google login error: $e");
-    print("StackTrace: $stack");
-    return null;
-  }
-}
-
-
-static Future<User?> signInWithFacebook(Map<String, dynamic> userData) async {
-  try {
-    final LoginResult result = await FacebookAuth.instance.login();
-    if (result.status != LoginStatus.success) return null;
-
-    final OAuthCredential credential =
-        FacebookAuthProvider.credential(result.accessToken!.token);
-
-    UserCredential userCredential =
-        await FirebaseAuth.instance.signInWithCredential(credential);
-
-    final user = userCredential.user;
-    if (user != null) {
-      final docRef =
-          FirebaseFirestore.instance.collection('Users').doc(user.uid);
-      final doc = await docRef.get();
-
-      if (!doc.exists) {
-        userData['email'] = user.email;
-        userData['name'] = user.displayName ?? '';
-        userData['profileImage'] = user.photoURL ?? '';
-        await docRef.set(userData);
-      }
+    try {
+      AuthCredential credential =
+          EmailAuthProvider.credential(email: user.email!, password: oldPassword);
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      throw Exception("Failed to update password: ${e.message}");
     }
-
-    return user;
-  } catch (e) {
-    print("Facebook login error: $e");
-    return null;
   }
-}
 }

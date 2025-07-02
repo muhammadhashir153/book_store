@@ -1,4 +1,5 @@
 import 'package:book_store/route_observer.dart';
+import 'package:book_store/user_screen/pages/account.dart';
 import 'package:book_store/user_screen/pages/single_book.dart';
 import 'package:book_store/user_screen/pages/user_home.dart';
 import 'package:flutter/material.dart';
@@ -25,16 +26,14 @@ class _UserHomePageState extends State<UserHomePage> with RouteAware {
 
   final List<String> _titles = [
     'Happy Reading!',
-    'Categories',
     'Cart',
     'Account',
   ];
 
   final List<Widget> _pages = [
     const HomeSupportPage(),
-    Center(child: CircularProgressIndicator()),
     const CartPage(),
-    Center(child: CircularProgressIndicator()),
+    const AccountPage(),
   ];
 
   Future<void> _loadUserAndWishlist() async {
@@ -202,10 +201,6 @@ class _UserHomePageState extends State<UserHomePage> with RouteAware {
         backgroundColor: const Color(0xffE6E6E6),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.category),
-            label: 'Categories',
-          ),
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_cart),
             label: 'Cart',

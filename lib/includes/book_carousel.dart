@@ -1,6 +1,9 @@
 import 'package:book_store/models/book_models.dart';
 import 'package:book_store/services/book_services.dart';
 import 'package:flutter/material.dart';
+import 'package:book_store/services/cart_services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:book_store/user_screen/pages/single_book.dart';
 import 'package:intl/intl.dart';
 
 class BookCarousel extends StatefulWidget {
@@ -17,6 +20,7 @@ class _BookCarouselState extends State<BookCarousel> {
   List<BookModel> books = [];
   List<BookModel> filteredBooks = [];
   bool isLoading = true;
+  String? userId;
 
   Future<void> fetchBooks() async {
     books = await BookService.getAllBooks();
@@ -51,10 +55,76 @@ class _BookCarouselState extends State<BookCarousel> {
     });
   }
 
+  Future<void> _loadUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    userId = prefs.getString('uid');
+  }
+
+  Future<void> _addToCart(int index) async {
+    if (userId == null || userId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF121212),
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          content: Text("User not logged in"),
+        ),
+      );
+      return;
+    }
+
+    final book = books[index];
+    final bookId = book.id;
+    final price = book.price ?? '0';
+
+    bool isAdded = await CartService.addToCart(
+      userId: userId!,
+      bookId: bookId!,
+      quantity: 1,
+      finalPrice: price,
+    );
+
+    if (isAdded && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF121212),
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          content: const Text(
+            "Added to cart",
+            style: TextStyle(color: Color(0xFFDEDEDE)),
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF121212),
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          content: const Text(
+            "Book already in cart",
+            style: TextStyle(color: Color(0xFFDEDEDE)),
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     fetchBooks();
+    _loadUserId();
   }
 
   @override
@@ -63,7 +133,7 @@ class _BookCarouselState extends State<BookCarousel> {
       padding: const EdgeInsets.only(left: 24),
       child: widget.type == 'deals'
           ? SizedBox(
-              height: 200,
+              height: 260,
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : ListView.builder(
@@ -86,11 +156,10 @@ class _BookCarouselState extends State<BookCarousel> {
                                 Image.network(
                                   book.imageUrl ?? '',
                                   width: 120,
-                                  height: 200,
+                                  height: 260,
                                   fit: BoxFit.cover,
                                 ),
                                 Expanded(
-                                  // 👈 Add this
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 8,
@@ -99,6 +168,8 @@ class _BookCarouselState extends State<BookCarousel> {
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Column(
                                           crossAxisAlignment:
@@ -138,6 +209,20 @@ class _BookCarouselState extends State<BookCarousel> {
                                             fontSize: 24,
                                           ),
                                         ),
+                                        ElevatedButton(
+                                          onPressed: () => _addToCart(index),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(
+                                              0xFFDEDEDE,
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Add to Cart',
+                                            style: TextStyle(
+                                              color: Color(0xFF121212),
+                                            ),
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -160,71 +245,81 @@ class _BookCarouselState extends State<BookCarousel> {
                         final book = filteredBooks[index];
                         return ClipRRect(
                           borderRadius: BorderRadius.circular(8.0),
-                          child: Container(
-                            width: 220,
-                            margin: const EdgeInsets.only(right: 16.0),
-                            decoration: BoxDecoration(
-                              color: Color(0xFFF5F5F5),
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                            child: Column(
-                              children: [
-                                Image.network(
-                                  book.imageUrl ?? '',
-                                  height: 160,
-                                  width: double.infinity,
-                                  fit: BoxFit.contain,
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => BookSingle(bookId: book.id!),
                                 ),
-                                Expanded(
-                                  child: Container(
-                                    padding: const EdgeInsets.all(16),
+                              );
+                            },
+                            child: Container(
+                              width: 220,
+                              margin: const EdgeInsets.only(right: 16.0),
+                              decoration: BoxDecoration(
+                                color: Color(0xFFF5F5F5),
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              child: Column(
+                                children: [
+                                  Image.network(
+                                    book.imageUrl ?? '',
+                                    height: 160,
                                     width: double.infinity,
-                                    color: Color(0xFF121212),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              book.genre ?? 'No Genre',
-                                              style: TextStyle(
-                                                color: Color(0xFFF5F5F5),
+                                    fit: BoxFit.contain,
+                                  ),
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.all(16),
+                                      width: double.infinity,
+                                      color: Color(0xFF121212),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                book.genre ?? 'No Genre',
+                                                style: TextStyle(
+                                                  color: Color(0xFFF5F5F5),
+                                                ),
                                               ),
-                                            ),
-                                            Text(
-                                              book.title ?? 'No Title',
-                                              style: TextStyle(
-                                                color: Color(0xFFF5F5F5),
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 20,
+                                              Text(
+                                                book.title ?? 'No Title',
+                                                style: TextStyle(
+                                                  color: Color(0xFFF5F5F5),
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 20,
+                                                ),
                                               ),
-                                            ),
-                                            Text(
-                                              book.authorName ?? 'No Author',
-                                              style: TextStyle(
-                                                color: Color(0xFFF5F5F5),
+                                              Text(
+                                                book.authorName ?? 'No Author',
+                                                style: TextStyle(
+                                                  color: Color(0xFFF5F5F5),
+                                                ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                        Text(
-                                          'Rs ${NumberFormat('#,##0.00').format(double.tryParse(book.price ?? '0') ?? 0)}',
-                                          style: TextStyle(
-                                            color: Color(0xFFF5F5F5),
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 24,
+                                            ],
                                           ),
-                                        ),
-                                      ],
+                                          Text(
+                                            'Rs ${NumberFormat('#,##0.00').format(double.tryParse(book.price ?? '0') ?? 0)}',
+                                            style: TextStyle(
+                                              color: Color(0xFFF5F5F5),
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 24,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         );

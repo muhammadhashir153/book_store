@@ -27,11 +27,11 @@ class MyApp extends StatelessWidget {
           backgroundColor: Color(0xFF121212),
           contentTextStyle: TextStyle(color: Color(0xFFDEDEDE), fontSize: 16),
           actionTextColor: Color(0xFFDEDEDE),
-          behavior: SnackBarBehavior.floating, // Optional: makes it float
+          behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          elevation: 6,
+          elevation: 12,
         ),
       ),
       initialRoute: AppRoutes.splashScreen,
