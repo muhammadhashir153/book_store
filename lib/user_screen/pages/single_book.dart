@@ -1,8 +1,11 @@
 import 'package:book_store/models/book_models.dart';
 import 'package:book_store/services/book_services.dart';
 import 'package:book_store/services/review_service.dart';
+import 'package:book_store/user_screen/pages/checkout_page.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:book_store/services/cart_services.dart';
+import 'package:book_store/services/checkout_services.dart';
 
 class BookSingle extends StatefulWidget {
   final String bookId;
@@ -205,25 +208,54 @@ class _BookSingleState extends State<BookSingle> {
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
                                     ElevatedButton(
-                                      onPressed: () {},
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Color(0xFF121212),
-                                      ),
-                                      child: const Text(
-                                        'Buy Now',
-                                        style: TextStyle(
-                                          color: Color(0xFFDEDEDE),
-                                        ),
-                                      ),
-                                    ),
+  onPressed: () async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('uid') ?? '';
+
+    final success = await CartService.addToCart(
+      userId: userId,
+      bookId: _book!.id ?? '',
+      quantity: 1,
+      finalPrice: _book!.price ?? '0',
+    );
+if (success && mounted) {
+      Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => CheckoutPage(userId: userId!)),
+    );
+}
+  },
+  style: ElevatedButton.styleFrom(
+    backgroundColor: Color(0xFF121212),
+  ),
+  child: const Text(
+    'Buy Now',
+    style: TextStyle(color: Color(0xFFDEDEDE)),
+  ),
+),
                                     const SizedBox(width: 8),
-                                    IconButton(
-                                      onPressed: () {},
-                                      icon: Icon(
-                                        Icons.shopping_cart,
-                                        color: Color(0xFF121212),
-                                      ),
-                                    ),
+                                   IconButton(
+  onPressed: () async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('uid') ?? '';
+
+    final success = await CartService.addToCart(
+      userId: userId,
+      bookId: _book!.id ?? '',
+      quantity: 1,
+      finalPrice: _book!.price ?? '0',
+    );
+
+    if (success && mounted) {
+      Navigator.pushNamed(context, '/view-cart'); // Make sure this route is defined
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Book already in cart or failed to add")),
+      );
+    }
+  },
+  icon: Icon(Icons.shopping_cart, color: Color(0xFF121212)),
+),
                                   ],
                                 ),
                               ],
