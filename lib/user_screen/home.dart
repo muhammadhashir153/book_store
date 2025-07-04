@@ -10,7 +10,8 @@ import 'package:book_store/services/wishlist_services.dart';
 import 'package:book_store/user_screen/pages/cart_page.dart';
 
 class UserHomePage extends StatefulWidget {
-  const UserHomePage({super.key});
+  final int initialIndex;
+  const UserHomePage({super.key, this.initialIndex = 0});
 
   @override
   State<UserHomePage> createState() => _UserHomePageState();
@@ -18,17 +19,13 @@ class UserHomePage extends StatefulWidget {
 
 class _UserHomePageState extends State<UserHomePage> with RouteAware {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final PageController _pageController = PageController();
+  late final PageController _pageController;
   int _selectedIndex = 0;
   String? userId;
   List<BookModel> wishlistBooks = [];
   bool isLoadingWishlist = false;
 
-  final List<String> _titles = [
-    'Happy Reading!',
-    'Cart',
-    'Account',
-  ];
+  final List<String> _titles = ['Happy Reading!', 'Cart', 'Account'];
 
   final List<Widget> _pages = [
     const HomeSupportPage(),
@@ -66,6 +63,8 @@ class _UserHomePageState extends State<UserHomePage> with RouteAware {
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: _selectedIndex);
     _loadUserAndWishlist();
   }
 

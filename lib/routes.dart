@@ -30,7 +30,14 @@ class AppRoutes {
     landing: (context) => const Landing(),
     login: (context) => const Login(),
     register: (context) => const Register(),
-    home: (context) => const UserHomePage(),
+    home: (context) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      int initialIndex = 0;
+      if (args is int) {
+        initialIndex = args;
+      }
+      return UserHomePage(initialIndex: initialIndex);
+    },
     allBook: (context) => const AllBooks(),
     thanks: (context) => const Thanks(),
   };

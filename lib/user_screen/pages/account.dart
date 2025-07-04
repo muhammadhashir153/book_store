@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:book_store/routes.dart';
 import 'package:book_store/services/checkout_services.dart';
 import 'package:book_store/services/user_service.dart';
 import 'package:book_store/user_screen/pages/single_order.dart';
+import 'package:book_store/user_screen/pages/update_pass.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AccountPage extends StatefulWidget {
@@ -18,7 +22,23 @@ class _AccountPageState extends State<AccountPage> {
   bool isLoading = true;
   bool isLogin = false;
   Map<String, dynamic> userData = {};
+  Map<String, dynamic> updatedData = {};
   List orderData = [];
+  final TextEditingController _nameCtrl = TextEditingController();
+  File? _selectedImage;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() {
+        _selectedImage = File(picked.path);
+      });
+
+      updatedData['profileImage'] = _selectedImage;
+      await UserService.updateUserData(userId!, updatedData);
+    }
+  }
 
   Future<void> _getUserId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -31,7 +51,6 @@ class _AccountPageState extends State<AccountPage> {
     setState(() {
       orderData = history;
       isLoading = false;
-      print('Order History: $orderData');
     });
   }
 
@@ -46,11 +65,13 @@ class _AccountPageState extends State<AccountPage> {
     }
 
     final data = await UserService.getUserData(userId!);
+
     if (data != null) {
       setState(() {
         userData = data;
         isLogin = true;
         isLoading = false;
+        updatedData = data;
       });
     } else {
       setState(() {
@@ -139,7 +160,9 @@ class _AccountPageState extends State<AccountPage> {
 
                         await _getUserData();
                         setState(() {});
-                        Navigator.pop(context);
+                        if (mounted) {
+                          Navigator.pop(context);
+                        }
                       },
                       child: Text(
                         "Save Address",
@@ -179,17 +202,61 @@ class _AccountPageState extends State<AccountPage> {
                   Center(
                     child: Column(
                       children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(100),
-                          child: Image.network(
-                            userData['profileImage'],
-                            width: 150,
-                            height: 150,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) =>
-                                const Icon(Icons.person, size: 150),
+                        GestureDetector(
+                          onTap: _pickImage,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(100),
+                                child: _selectedImage != null
+                                    ? Image.file(
+                                        _selectedImage!,
+                                        width: 150,
+                                        height: 150,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.network(
+                                        userData['profileImage'] ?? '',
+                                        width: 150,
+                                        height: 150,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) =>
+                                            const Icon(Icons.person, size: 150),
+                                      ),
+                              ),
+                              Positioned(
+                                top: 0,
+                                right: 0,
+                                child: Transform.translate(
+                                  offset: const Offset(
+                                    0,
+                                    0,
+                                  ), // Overlap by 50% look
+                                  child: Container(
+                                    width: 36,
+                                    height: 36,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF121212),
+                                      borderRadius: BorderRadius.circular(18),
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.edit,
+                                      size: 18,
+                                      color: Color(0xFFDEDEDE),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                        const SizedBox(height: 5),
+
                         const SizedBox(height: 16),
                         Text(
                           userData['name'],
@@ -203,7 +270,15 @@ class _AccountPageState extends State<AccountPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             ElevatedButton.icon(
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        UpdatePass(userId: userId),
+                                  ),
+                                );
+                              },
                               style: ButtonStyle(
                                 backgroundColor: WidgetStateProperty.all<Color>(
                                   const Color(0xFF121212),

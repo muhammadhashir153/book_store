@@ -24,8 +24,6 @@ class _BookCarouselState extends State<BookCarousel> {
 
   Future<void> fetchBooks() async {
     books = await BookService.getAllBooks();
-    print('Fetched books: ${books.length}');
-    print('Topic: ${widget.topic}');
 
     List<BookModel> tempFiltered = [];
 
@@ -36,11 +34,9 @@ class _BookCarouselState extends State<BookCarousel> {
         ),
       );
       tempFiltered = books.take(5).toList();
-      print("Top books filtered: ${tempFiltered.length}");
     } else if (widget.topic == 'latest') {
       books.shuffle();
       tempFiltered = books.take(5).toList();
-      print("Latest books filtered: ${tempFiltered.length}");
     } else {
       tempFiltered = books
           .where(

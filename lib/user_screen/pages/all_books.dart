@@ -1,3 +1,4 @@
+import 'package:book_store/routes.dart';
 import 'package:book_store/services/book_services.dart';
 import 'package:book_store/user_screen/pages/single_book.dart';
 import 'package:flutter/material.dart';
@@ -139,6 +140,17 @@ class _AllBooksState extends State<AllBooks> {
           content: const Text(
             "Added to cart",
             style: TextStyle(color: Color(0xFFDEDEDE)),
+          ),
+          action: SnackBarAction(
+            label: 'View Cart',
+            textColor: Color(0xFFDEDEDE),
+            onPressed: () {
+              Navigator.pushNamed(
+                context,
+                AppRoutes.home,
+                arguments: 1,
+              );
+            },
           ),
         ),
       );

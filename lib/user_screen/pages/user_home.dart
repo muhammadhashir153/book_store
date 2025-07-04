@@ -58,6 +58,37 @@ class _HomeSupportPageState extends State<HomeSupportPage> {
                 ),
               ),
               BookCarousel(topic: 'top book'),
+              SizedBox(height: 24),
+              Padding(
+                padding: EdgeInsets.only(right: 24, bottom: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Latest Books",
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(
+                          context,
+                        ).push(MaterialPageRoute(builder: (_) => AllBooks()));
+                      },
+                      child: Text(
+                        "See All",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              BookCarousel(topic: 'latest'),
             ],
           ),
         ),
