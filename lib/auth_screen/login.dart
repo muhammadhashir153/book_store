@@ -18,6 +18,17 @@ class _LoginState extends State<Login> {
   bool _isRemeber = false;
   double _opacity = 0.0;
   double _scale = 0.6;
+    final Map<String, dynamic> userData = {
+    'name': '',
+    'profileImage': '',
+    'email': '',
+    'role': 'user',
+    'billingAddress': '',
+    'shippingAddress': '',
+  };
+    final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   void _login() async {
     FocusScope.of(context).unfocus();
@@ -45,6 +56,11 @@ class _LoginState extends State<Login> {
         ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
+  }
+
+    String getAvatarUrl(String name) {
+    String seed = name.isNotEmpty ? name.trim()[0].toUpperCase() : 'U';
+    return 'https://api.dicebear.com/8.x/initials/png?seed=$seed';
   }
 
   @override
@@ -176,7 +192,37 @@ class _LoginState extends State<Login> {
                   style: TextStyle(fontSize: 16, color: Color(0xFF121212)),
                 ),
                 const SizedBox(height: 10),
-                SignInButton(Buttons.Google, onPressed: () {}),
+                              SignInButton(
+  Buttons.Google,
+  onPressed: () async {
+    FocusScope.of(context).unfocus();
+
+    userData['name'] = _nameController.text.trim().isNotEmpty
+        ? _nameController.text.trim()
+        : 'Google User';
+    userData['email'] = ''; // will be auto-filled in service
+    userData['profileImage'] =
+        getAvatarUrl(userData['name']);
+    userData['role'] = 'user';
+    userData['billingAddress'] = '';
+    userData['shippingAddress'] = '';
+
+    final user = await UserService.signInWithGoogle(userData);
+    print(user);
+
+   if (user != null && mounted) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Google registration successful!')),
+  );
+  Navigator.pushReplacementNamed(context, AppRoutes.viewBook);
+} else {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Google registration failed!')),
+  );
+  print("❌ Google sign-in returned null.");
+}
+  }
+),
                 const SizedBox(height: 10),
                 SignInButton(Buttons.FacebookNew, onPressed: () {}),
                 const SizedBox(height: 30),
