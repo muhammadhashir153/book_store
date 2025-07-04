@@ -3,11 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:book_store/services/checkout_services.dart';
 import 'package:intl/intl.dart';
+import 'package:book_store/models/book_models.dart';
 
 class CheckoutPage extends StatefulWidget {
   final String userId;
+  final BookModel? directBuyBook;
+  final bool isDirectBuy;
 
-  const CheckoutPage({super.key, required this.userId});
+    const CheckoutPage({
+    super.key,
+    required this.userId,
+    this.directBuyBook,
+    this.isDirectBuy = false,
+  });
 
   @override
   State<CheckoutPage> createState() => _CheckoutPageState();
@@ -21,11 +29,28 @@ class _CheckoutPageState extends State<CheckoutPage> {
   List<Map<String, dynamic>> cartItems = [];
 
   @override
-  void initState() {
-    super.initState();
-    fetchUserAddress();
+ void initState() {
+  super.initState();
+  fetchUserAddress();
+  if (!widget.isDirectBuy) {
     fetchCartItems();
+  } else {
+    setState(() {
+      cartItems = [
+        {
+          'book-id': widget.directBuyBook!.id,
+          'final-price': widget.directBuyBook!.price,
+          'quantity': 1,
+          'title': widget.directBuyBook!.title,
+        }
+      ];
+      totalAmount = double.tryParse(widget.directBuyBook!.price ?? '0') ?? 0;
+    });
   }
+}
+
+
+
 
   Future<void> fetchUserAddress() async {
     final doc = await FirebaseFirestore.instance
@@ -56,6 +81,31 @@ class _CheckoutPageState extends State<CheckoutPage> {
       totalAmount = total;
     });
   }
+
+Future<void> _removeDirectBuyFromCart() async {
+  if (widget.isDirectBuy && widget.directBuyBook != null) {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('Cart')
+          .where('user-id', isEqualTo: widget.userId)
+          .where('book-id', isEqualTo: widget.directBuyBook!.id)
+          .get();
+
+      for (final doc in snapshot.docs) {
+        await doc.reference.delete();
+      }
+      print('🗑️ Direct-buy book removed from cart');
+    } catch (e) {
+      print('❌ Failed to remove direct-buy book: $e');
+    }
+  }
+}
+
+@override
+void dispose() {
+  _removeDirectBuyFromCart();
+  super.dispose();
+}
 
   Future<void> updateAddress() async {
     final streetController = TextEditingController();
@@ -176,36 +226,47 @@ class _CheckoutPageState extends State<CheckoutPage> {
     }
   }
 
-  void handlePayNow() async {
-    if (shippingAddress == null || shippingAddress!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please add a delivery address before proceeding.'),
-        ),
-      );
-      return;
-    }
+ void handlePayNow() async {
+  if (shippingAddress == null || shippingAddress!.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Please add a delivery address before proceeding.')),
+    );
+    return;
+  }
 
-    if (billingAddress == null || billingAddress!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please add a billing address before proceeding.'),
-        ),
-      );
-      return;
-    }
+  if (billingAddress == null || billingAddress!.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Please add a billing address before proceeding.')),
+    );
+    return;
+  }
 
-    final invoiceNum = DateTime.now().millisecondsSinceEpoch.toString();
-    for (final item in cartItems) {
-      await CheckoutService.placeOrder(
-        userId: widget.userId,
-        bookId: item['book-id'].toString(),
-        price: item['final-price'].toString(),
-        quantity: item['quantity'],
-        invoiceNum: invoiceNum,
-      );
-    }
+  final invoiceNum = DateTime.now().millisecondsSinceEpoch.toString();
 
+  for (final item in cartItems) {
+    await CheckoutService.placeOrder(
+      userId: widget.userId,
+      bookId: item['book-id'],
+      price: item['final-price'].toString(),
+      quantity: item['quantity'],
+      invoiceNum: invoiceNum,
+    );
+
+    if (widget.isDirectBuy) {
+      await FirebaseFirestore.instance
+          .collection('Cart')
+          .where('user-id', isEqualTo: widget.userId)
+          .where('book-id', isEqualTo: item['book-id'])
+          .get()
+          .then((snapshot) {
+        for (var doc in snapshot.docs) {
+          doc.reference.delete(); // remove single item from cart
+        }
+      });
+    }
+  }
+
+  if (!widget.isDirectBuy) {
     final cartSnapshot = await FirebaseFirestore.instance
         .collection('Cart')
         .where('user-id', isEqualTo: widget.userId)
@@ -214,13 +275,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
     for (final doc in cartSnapshot.docs) {
       await doc.reference.delete();
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Order placed with Invoice #$invoiceNum')),
-    );
-
-    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.thanks, (route) => false);
   }
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('Order placed with Invoice #$invoiceNum')),
+  );
+
+  Navigator.pushNamedAndRemoveUntil(context, AppRoutes.thanks, (route) => false);
+}
+
 
   @override
   Widget build(BuildContext context) {

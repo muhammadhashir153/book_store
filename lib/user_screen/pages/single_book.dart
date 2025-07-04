@@ -207,7 +207,7 @@ class _BookSingleState extends State<BookSingle> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
-                                    ElevatedButton(
+ElevatedButton(
   onPressed: () async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('uid') ?? '';
@@ -218,12 +218,19 @@ class _BookSingleState extends State<BookSingle> {
       quantity: 1,
       finalPrice: _book!.price ?? '0',
     );
-if (success && mounted) {
+
+    if (success && mounted) {
       Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => CheckoutPage(userId: userId!)),
-    );
-}
+        context,
+        MaterialPageRoute(
+          builder: (context) => CheckoutPage(
+            userId: userId,
+            directBuyBook: _book,
+            isDirectBuy: true,
+          ),
+        ),
+      );
+    }
   },
   style: ElevatedButton.styleFrom(
     backgroundColor: Color(0xFF121212),
