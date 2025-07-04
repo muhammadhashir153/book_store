@@ -20,8 +20,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
     print(role);
     print(uid);
-    if (uid.isNotEmpty && role != 'user') {
-      _route = AppRoutes.viewBook; // you can define this route
+    if (uid.isNotEmpty && role == 'admin') {
+      _route = AppRoutes.viewBook;
     } else if (uid.isNotEmpty && role == 'user') {
       _route = AppRoutes.home;
     }

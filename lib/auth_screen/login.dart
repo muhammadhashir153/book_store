@@ -18,7 +18,7 @@ class _LoginState extends State<Login> {
   bool _isRemeber = false;
   double _opacity = 0.0;
   double _scale = 0.6;
-    final Map<String, dynamic> userData = {
+  final Map<String, dynamic> userData = {
     'name': '',
     'profileImage': '',
     'email': '',
@@ -26,7 +26,7 @@ class _LoginState extends State<Login> {
     'billingAddress': '',
     'shippingAddress': '',
   };
-    final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
@@ -58,7 +58,7 @@ class _LoginState extends State<Login> {
     }
   }
 
-    String getAvatarUrl(String name) {
+  String getAvatarUrl(String name) {
     String seed = name.isNotEmpty ? name.trim()[0].toUpperCase() : 'U';
     return 'https://api.dicebear.com/8.x/initials/png?seed=$seed';
   }
@@ -192,39 +192,52 @@ class _LoginState extends State<Login> {
                   style: TextStyle(fontSize: 16, color: Color(0xFF121212)),
                 ),
                 const SizedBox(height: 10),
-                              SignInButton(
-  Buttons.Google,
-  onPressed: () async {
-    FocusScope.of(context).unfocus();
+                SignInButton(
+                  Buttons.Google,
+                  onPressed: () async {
+                    FocusScope.of(context).unfocus();
 
-    userData['name'] = _nameController.text.trim().isNotEmpty
-        ? _nameController.text.trim()
-        : 'Google User';
-    userData['email'] = ''; // will be auto-filled in service
-    userData['profileImage'] =
-        getAvatarUrl(userData['name']);
-    userData['role'] = 'user';
-    userData['billingAddress'] = '';
-    userData['shippingAddress'] = '';
+                    userData['name'] = _nameController.text.trim().isNotEmpty
+                        ? _nameController.text.trim()
+                        : 'Google User';
+                    userData['email'] = ''; // will be filled in service
+                    userData['profileImage'] = getAvatarUrl(userData['name']);
+                    userData['role'] = 'user';
+                    userData['billingAddress'] = '';
+                    userData['shippingAddress'] = '';
 
-    final user = await UserService.signInWithGoogle(userData);
-    print(user);
+                    final result = await UserService.signInWithGoogle(userData);
 
-   if (user != null && mounted) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('Google registration successful!')),
-  );
-  Navigator.pushReplacementNamed(context, AppRoutes.viewBook);
-} else {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('Google registration failed!')),
-  );
-  print("❌ Google sign-in returned null.");
-}
-  }
-),
+                    if (!mounted) return;
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          result['message'] ?? 'Something went wrong',
+                        ),
+                      ),
+                    );
+
+                    if (result['success'] == true) {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        AppRoutes.splashScreen,
+                      );
+                    }
+                  },
+                ),
                 const SizedBox(height: 10),
-                SignInButton(Buttons.FacebookNew, onPressed: () {}),
+                SignInButton(
+                  Buttons.FacebookNew,
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Facebook login is not available yet.'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                ),
                 const SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

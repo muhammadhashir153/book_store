@@ -290,14 +290,20 @@ class _CartPageState extends State<CartPage> {
                               color: Color(0xFF121212),
                             ),
                           ),
-                          TextButton(
+                          TextButton.icon(
                             onPressed: () {
                               setState(() {
                                 isExpanded = !isExpanded;
                               });
                             },
-                            child: Text(
+                            label: Text(
                               isExpanded ? "View Less" : "View Details",
+                            ),
+                            icon: Icon(
+                              isExpanded
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                              color: Color(0xFF121212),
                             ),
                           ),
                         ],
@@ -306,7 +312,7 @@ class _CartPageState extends State<CartPage> {
 
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
-                        height: isExpanded ? 120 : 20,
+                        height: isExpanded ? 120 : 0,
                         child: ListView(
                           shrinkWrap: true,
                           physics: isExpanded

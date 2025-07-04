@@ -1,4 +1,5 @@
 import 'package:book_store/models/book_models.dart';
+import 'package:book_store/routes.dart';
 import 'package:book_store/services/book_services.dart';
 import 'package:book_store/admin_screen/editbook.dart';
 import 'package:book_store/admin_screen/addbook.dart';
@@ -79,6 +80,26 @@ class _ViewBooksState extends State<ViewBooks> {
       appBar: AppBar(
         title: const Text('All Books'),
         automaticallyImplyLeading: false,
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                AppRoutes.home,
+                (route) => false,
+              );
+            },
+            style: ButtonStyle(
+              backgroundColor: WidgetStateProperty.all<Color>(
+                const Color(0xFF121212),
+              ),
+            ),
+            child: const Text(
+              "Go to App",
+              style: TextStyle(color: Color(0xFFDEDEDE)),
+            ),
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

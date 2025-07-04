@@ -52,12 +52,12 @@ class UserService {
         // Now fetch role from Firestore (example)
         DocumentSnapshot<Map<String, dynamic>> userDoc = await FirebaseFirestore
             .instance
-            .collection('users')
+            .collection('Users')
             .doc(user.uid)
             .get();
 
         if (userDoc.exists && userDoc.data() != null) {
-          String role = userDoc.data()!['role'] ?? 'user'; // fallback role
+          String role = userDoc.data()!['role'] ?? 'not found'; // fallback role
           await prefs.setString('role', role);
         } else {
           await prefs.setString('role', 'user'); // default if not found
@@ -89,9 +89,12 @@ class UserService {
     }
   }
 
-  static Future<User?> signInWithGoogle(Map<String, dynamic> userData) async {
+  static Future<Map<String, dynamic>> signInWithGoogle(
+    Map<String, dynamic> userData,
+  ) async {
     try {
       print('Attempting Google sign-in');
+
       final GoogleSignIn googleSignIn = GoogleSignIn(
         clientId: kIsWeb
             ? '389708759305-3sibfo29sdhf7emp68eg3qld5d3rbhv6.apps.googleusercontent.com'
@@ -100,11 +103,11 @@ class UserService {
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
-        print("User cancelled Google login or popup blocked.");
-        return null;
+        return {
+          'success': false,
+          'message': 'User cancelled Google login or popup blocked.',
+        };
       }
-
-      print("Google user: ${googleUser.displayName}, ${googleUser.email}");
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
@@ -116,9 +119,7 @@ class UserService {
 
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithCredential(credential);
-
       final user = userCredential.user;
-      print("Firebase user: ${user?.uid}");
 
       if (user != null) {
         final docRef = FirebaseFirestore.instance
@@ -132,16 +133,26 @@ class UserService {
           userData['profileImage'] = user.photoURL ?? '';
           await docRef.set(userData);
           print("User data saved to Firestore.");
-        } else {
-          print("User already exists in Firestore.");
         }
-      }
 
-      return user;
+        // Save role and uid to SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('role', userData['role']);
+        await prefs.setString('uid', user.uid); // ← Save UID here
+
+        return {
+          'success': true,
+          'user': user,
+          'message': 'Google sign-in successful.',
+        };
+      } else {
+        return {'success': false, 'message': 'Firebase authentication failed.'};
+      }
     } catch (e, stack) {
       print("Google login error: $e");
       print("StackTrace: $stack");
-      return null;
+
+      return {'success': false, 'message': 'An unexpected error occurred: $e'};
     }
   }
 
@@ -213,20 +224,46 @@ class UserService {
     }
   }
 
-  static Future<void> updateUserPassword(
-      String oldPassword, String newPassword) async {
+  static Future<Map<String, dynamic>> updateUserPassword(
+    String oldPassword,
+    String newPassword,
+  ) async {
     final user = FirebaseAuth.instance.currentUser;
+
     if (user == null) {
-      throw Exception("No user is currently signed in.");
+      return {'success': false, 'message': "No user is currently signed in."};
     }
 
     try {
-      AuthCredential credential =
-          EmailAuthProvider.credential(email: user.email!, password: oldPassword);
+      AuthCredential credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: oldPassword,
+      );
+
       await user.reauthenticateWithCredential(credential);
       await user.updatePassword(newPassword);
+
+      return {'success': true, 'message': "Password updated successfully."};
     } on FirebaseAuthException catch (e) {
-      throw Exception("Failed to update password: ${e.message}");
+      String errorMessage;
+
+      switch (e.code) {
+        case 'wrong-password':
+          errorMessage = "The current password is incorrect.";
+          break;
+        case 'weak-password':
+          errorMessage = "The new password is too weak.";
+          break;
+        case 'requires-recent-login':
+          errorMessage = "Please log in again before updating your password.";
+          break;
+        default:
+          errorMessage = e.message ?? "Failed to update password.";
+      }
+
+      return {'success': false, 'message': errorMessage};
+    } catch (e) {
+      return {'success': false, 'message': "Unexpected error: ${e.toString()}"};
     }
   }
 }

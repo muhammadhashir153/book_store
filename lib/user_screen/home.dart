@@ -1,4 +1,5 @@
 import 'package:book_store/route_observer.dart';
+import 'package:book_store/routes.dart';
 import 'package:book_store/user_screen/pages/account.dart';
 import 'package:book_store/user_screen/pages/single_book.dart';
 import 'package:book_store/user_screen/pages/user_home.dart';
@@ -22,6 +23,7 @@ class _UserHomePageState extends State<UserHomePage> with RouteAware {
   late final PageController _pageController;
   int _selectedIndex = 0;
   String? userId;
+  String? role;
   List<BookModel> wishlistBooks = [];
   bool isLoadingWishlist = false;
 
@@ -36,7 +38,9 @@ class _UserHomePageState extends State<UserHomePage> with RouteAware {
   Future<void> _loadUserAndWishlist() async {
     final prefs = await SharedPreferences.getInstance();
     userId = prefs.getString('uid') ?? '';
+    role = prefs.getString('role') ?? '';
     await _fetchWishlist();
+    print(role);
   }
 
   Future<void> _fetchWishlist() async {
@@ -175,6 +179,26 @@ class _UserHomePageState extends State<UserHomePage> with RouteAware {
         title: Text(_titles[_selectedIndex]),
         automaticallyImplyLeading: false,
         actions: [
+          if (role == "admin")
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  AppRoutes.viewBook,
+                  (route) => false,
+                );
+              },
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.all<Color>(
+                  const Color(0xFF121212),
+                ),
+              ),
+              child: const Text(
+                "Manage Books",
+                style: TextStyle(color: Color(0xFFDEDEDE)),
+              ),
+            ),
+
           IconButton(
             icon: const Icon(Icons.favorite_border),
             onPressed: () {

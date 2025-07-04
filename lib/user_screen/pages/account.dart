@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:convert';
 
 import 'package:book_store/routes.dart';
 import 'package:book_store/services/checkout_services.dart';
@@ -7,6 +7,7 @@ import 'package:book_store/user_screen/pages/single_order.dart';
 import 'package:book_store/user_screen/pages/update_pass.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -24,19 +25,44 @@ class _AccountPageState extends State<AccountPage> {
   Map<String, dynamic> userData = {};
   Map<String, dynamic> updatedData = {};
   List orderData = [];
-  final TextEditingController _nameCtrl = TextEditingController();
-  File? _selectedImage;
+  String? _isImageChanged;
+
+  Future<String> uploadCoverImage(XFile imageFile) async {
+    const apiKey = '65cc0244b560b957fa8a47cc812a6963';
+    final bytes = await imageFile.readAsBytes();
+    final base64Image = base64Encode(bytes);
+
+    final uri = Uri.parse('https://api.imgbb.com/1/upload?key=$apiKey');
+
+    final response = await http.post(
+      uri,
+      body: {
+        'image': base64Image,
+        'name': 'book_cover_${DateTime.now().millisecondsSinceEpoch}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      return json['data']['url'];
+    } else {
+      throw Exception('Image upload failed: ${response.body}');
+    }
+  }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked != null) {
+      final newImage = await uploadCoverImage(picked);
+
       setState(() {
-        _selectedImage = File(picked.path);
+        _isImageChanged = newImage;
       });
 
-      updatedData['profileImage'] = _selectedImage;
+      updatedData['profileImage'] = newImage;
       await UserService.updateUserData(userId!, updatedData);
+      await _getUserData();
     }
   }
 
@@ -209,9 +235,9 @@ class _AccountPageState extends State<AccountPage> {
                             children: [
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(100),
-                                child: _selectedImage != null
-                                    ? Image.file(
-                                        _selectedImage!,
+                                child: _isImageChanged != null
+                                    ? Image.network(
+                                        _isImageChanged!,
                                         width: 150,
                                         height: 150,
                                         fit: BoxFit.cover,
@@ -289,7 +315,7 @@ class _AccountPageState extends State<AccountPage> {
                                 color: Color(0xFFDEDEDE),
                               ),
                               label: const Text(
-                                "Edit Profile",
+                                "Change Password",
                                 style: TextStyle(color: Color(0xFFDEDEDE)),
                               ),
                             ),
